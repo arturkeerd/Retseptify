@@ -1,10 +1,10 @@
 import React, { ReactNode } from "react";
 import {
+  GestureResponderEvent,
   Pressable,
+  StyleSheet,
   Text,
   View,
-  StyleSheet,
-  GestureResponderEvent,
 } from "react-native";
 
 type Props = {
@@ -46,10 +46,24 @@ export default function WhiteTextButton({
 }
 
 const s = StyleSheet.create({
-  btn: { flex: 1, borderRadius: 12, paddingVertical: 12, alignItems: "center" },
-  btnPrimary: { backgroundColor: "#EAEAEA" },
-  btnSecondary: { backgroundColor: "#EEE" },
-  pressed: { opacity: 0.85 },
+  btn: {
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  btnPrimary: {},
+  btnSecondary: {
+    shadowOpacity: 0.06,
+    elevation: 2,
+  },
+  pressed: { opacity: 0.7 },
   disabled: { opacity: 0.5 },
   row: {
     flexDirection: "row",
@@ -57,6 +71,6 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  text: { fontWeight: "700", color: "#000" },
-  textSecondary: { fontWeight: "600", color: "#333" },
+  text: { fontWeight: "600", fontSize: 16, color: "#000" },
+  textSecondary: { fontWeight: "500", color: "#333" },
 });
