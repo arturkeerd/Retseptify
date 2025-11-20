@@ -7,6 +7,14 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 1. Install dependencies
 
    ```bash
+
+   npm install @react-navigation/native-stack
+   npm install @react-navigation/native
+   npm install expo
+   npx expo install react-native-screens react-native-safe-area-context
+   npm install react-native-dotenv
+   npm install react-native-url-polyfill
+   npm install @supabase/supabase-js
    npm install
    ```
 
@@ -14,6 +22,10 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
    npx expo start
+
+   OR
+
+   npx expo start -c
    ```
 
 In the output, you'll find options to open the app in a
