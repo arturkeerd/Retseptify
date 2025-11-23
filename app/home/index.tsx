@@ -1,17 +1,18 @@
 // app/home/index.tsx
+import { FilterRecipes } from "@/components/FilterRecipes";
+import RecipeListItem from "@/components/RecipeListItem";
+import { SortMode, SortRecipes } from "@/components/SortRecipes";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
   FlatList,
+  Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { supabase } from "@/lib/supabase";
 import styles from "./styles";
-import RecipeListItem from "@/components/RecipeListItem";
-import { FilterRecipes } from "@/components/FilterRecipes";
-import { SortRecipes, SortMode } from "@/components/SortRecipes";
 
 type DbRecipe = {
   id: string;
@@ -47,6 +48,7 @@ type Recipe = {
 };
 
 export default function Home() {
+    const router = useRouter();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -312,8 +314,7 @@ export default function Home() {
         <View style={styles.footerRight}>
           <TouchableOpacity
             style={styles.circleButton}
-            onPress={() => console.log("Profile pressed")}
-          >
+            onPress={() => router.push("/home/user/profile")}>
             <Text style={styles.circleButtonText}>P</Text>
           </TouchableOpacity>
         </View>
