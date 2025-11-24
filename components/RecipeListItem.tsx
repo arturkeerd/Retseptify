@@ -7,18 +7,28 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  ImageStyle,
 } from "react-native";
+import { router } from "expo-router";
+import ArrowIcon from "../assets/images/arrow.png";
+
+type RecipeIngredient = {
+  name: string;
+  quantity: string | null;
+  unit: string | null;
+};
 
 type Recipe = {
   id: string;
   title: string;
-  // hiljem saad siia lisada kitchenName, image_url, tags jne
+  imageUrl: string | null;
+  ingredients: RecipeIngredient[];
 };
 
 type Props = {
   recipe: Recipe;
   isExpanded?: boolean;
-  onPress?: () => void;
+  onPress?: () => void; // kaardi enda klikk (expand/collapse)
 };
 
 export const RecipeListItem: React.FC<Props> = ({
@@ -26,6 +36,10 @@ export const RecipeListItem: React.FC<Props> = ({
   isExpanded = false,
   onPress,
 }) => {
+const maxIngredientsToShow = 5;
+const visibleIngredients = recipe.ingredients.slice(0, maxIngredientsToShow);
+const hasMoreIngredients = recipe.ingredients.length > maxIngredientsToShow;
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <View style={[styles.container, isExpanded && styles.containerExpanded]}>
@@ -37,22 +51,56 @@ export const RecipeListItem: React.FC<Props> = ({
         {/* Kui on avatud olekus, näitame “laiendatud” osa */}
         {isExpanded && (
           <View style={styles.expandedContent}>
-            {/* Placeholder – hiljem seome päris pildi ja koostisosad */}
+            {/* Koostisosad */}
             <View style={styles.ingredientsBox}>
-              <Text style={styles.ingredientsTitle}>Koostisosad (demo)</Text>
-              <Text style={styles.ingredientsLine}>• muna</Text>
-              <Text style={styles.ingredientsLine}>• suhkur</Text>
-              <Text style={styles.ingredientsLine}>• šokolaad</Text>
+              <Text style={styles.ingredientsTitle}>Koostisosad</Text>
+{visibleIngredients.map((ing, idx) => {
+  const qtyPart =
+    ing.quantity && ing.unit
+      ? `${ing.quantity} ${ing.unit}`
+      : ing.quantity || ing.unit || "";
+
+  return (
+    <Text key={idx} style={styles.ingredientsLine}>
+      {/* nime osa */}
+      • {ing.name}
+      {/* kui on mingi kogus/ühik, lisame vahe ja numbri */}
+      {qtyPart ? ` ${qtyPart}` : ""}
+    </Text>
+  );
+})}
+{hasMoreIngredients && (
+  <Text style={styles.ingredientsMore}>…</Text>
+)}
             </View>
 
-            <View style={styles.imageAndArrow}>
-              {/* Demo pildi asemel saad hiljem panna recipe.image_url */}
-              <View style={styles.imagePlaceholder}>
-                <Text style={styles.imageText}>PILT</Text>
+            {/* Pilt + nool overlay */}
+            <View style={styles.imageWrapper}>
+              <View style={styles.imageContainer}>
+                {recipe.imageUrl ? (
+                  <Image
+                    source={{ uri: recipe.imageUrl }}
+                    style={styles.image}
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholderInner}>
+                    <Text style={styles.imageText}>PILT</Text>
+                  </View>
+                )}
               </View>
-              <View style={styles.arrowCircle}>
-                <Text style={styles.arrowText}>{">"}</Text>
-              </View>
+
+              <TouchableOpacity
+                style={styles.arrowCircle}
+                activeOpacity={0.85}
+                onPress={() =>
+                  router.push({
+                    pathname: "/home/detailview",
+                    params: { id: recipe.id },
+                  })
+                }
+              >
+                <Image source={ArrowIcon} style={styles.arrowImage} />
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -69,11 +117,14 @@ type Styles = {
   ingredientsBox: ViewStyle;
   ingredientsTitle: TextStyle;
   ingredientsLine: TextStyle;
-  imageAndArrow: ViewStyle;
-  imagePlaceholder: ViewStyle;
+  ingredientsMore: TextStyle;
+  imageWrapper: ViewStyle;
+  imageContainer: ViewStyle;
+  image: ImageStyle;
+  imagePlaceholderInner: ViewStyle;
   imageText: TextStyle;
   arrowCircle: ViewStyle;
-  arrowText: TextStyle;
+  arrowImage: ImageStyle;
 };
 
 const styles = StyleSheet.create<Styles>({
@@ -82,10 +133,10 @@ const styles = StyleSheet.create<Styles>({
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 8,
-    backgroundColor: "#4F6B60", // roheline kast Figma järgi-ish
+    backgroundColor: "#4F6B60",
   },
   containerExpanded: {
-    backgroundColor: "#FFE9A6", // kollane kui avatud
+    backgroundColor: "#FFE9A6",
   },
   title: {
     fontSize: 16,
@@ -107,34 +158,56 @@ const styles = StyleSheet.create<Styles>({
   ingredientsLine: {
     fontSize: 12,
   },
-  imageAndArrow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+  ingredientsMore: {
+    fontSize: 12,
+    fontWeight: "600",
   },
-  imagePlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 12,
+
+  // --- pilt + nool ---
+  imageWrapper: {
+    width: 140,
+    height: 100,
+    position: "relative",
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  imageContainer: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 16,
+    overflow: "hidden",
     backgroundColor: "#ccc",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  imagePlaceholderInner: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
   imageText: {
     fontSize: 12,
   },
-  arrowCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#C48C5B",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  arrowText: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
+arrowCircle: {
+  position: "absolute",
+  right: 6,
+  top: "50%",
+  transform: [{ translateY: -24 }],
+  width: 48,
+  height: 48,
+  borderRadius: 24,
+  overflow: "hidden",        // et pilt jääks ringi sisse
+  alignItems: "center",
+  justifyContent: "center",
+},
+arrowImage: {
+  width: "100%",              // täida kogu ring
+  height: "100%",
+  resizeMode: "cover",        // või "contain", kui nii parem näeb
+},
 });
 
 export default RecipeListItem;
