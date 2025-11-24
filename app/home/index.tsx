@@ -314,7 +314,7 @@ export default function Home() {
         <View style={styles.footerRight}>
           <TouchableOpacity
             style={styles.circleButton}
-            onPress={() => router.push("/home/user/profile")}>
+            onPress={() => router.push("/home/user")}>
             <Text style={styles.circleButtonText}>P</Text>
           </TouchableOpacity>
         </View>
