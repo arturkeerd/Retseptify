@@ -1,4 +1,3 @@
-// components/FilterRecipes.tsx
 import React from "react";
 import {
   Modal,
@@ -17,10 +16,9 @@ type Props = {
   allTags: string[];
   selectedKitchens: string[];
   selectedTags: string[];
-  onClearAll: () => void;
+  onClearAll: () => void;          // ainult TAGIDE nullimiseks
   onToggleKitchen: (name: string) => void;
   onToggleTag: (tag: string) => void;
-  onSelectAllKitchens: () => void;
   onSelectAllTags: () => void;
 };
 
@@ -34,7 +32,6 @@ export function FilterRecipes({
   onClearAll,
   onToggleKitchen,
   onToggleTag,
-  onSelectAllKitchens,
   onSelectAllTags,
 }: Props) {
   return (
@@ -58,22 +55,7 @@ export function FilterRecipes({
               <Text style={styles.sectionTitle}>Köögid</Text>
             </View>
 
-            {/* Köökide “Kõik” */}
-            {allKitchens.length > 0 && (
-              <View style={styles.rowCenter}>
-                <TouchableOpacity
-                  style={[
-                    styles.bigPill,
-                    selectedKitchens.length === allKitchens.length &&
-                      styles.bigPillActive,
-                  ]}
-                  onPress={onSelectAllKitchens}
-                >
-                  <Text style={styles.bigPillText}>Kõik</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
+            {/* Köökide chipid – alguses kõik aktiivsed, vajutades lülitab välja */}
             <View style={styles.kitchenRow}>
               {allKitchens.map((name) => {
                 const active = selectedKitchens.includes(name);

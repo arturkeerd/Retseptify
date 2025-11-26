@@ -3,10 +3,14 @@ import { FilterRecipes } from "@/components/FilterRecipes";
 import RecipeListItem from "@/components/RecipeListItem";
 import { SortMode, SortRecipes } from "@/components/SortRecipes";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
+
 import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -20,20 +24,38 @@ type DbRecipe = {
   description: string | null;
   image_url: string | null;
   created_at: string | null;
-  kitchens: {
-    id: string;
-    name: string;
-    type: string;
-  }[];
+
+  kitchens:
+    | {
+        id: string;
+        name: string;
+        type: string;
+      }
+    | {
+        id: string;
+        name: string;
+        type: string;
+      }[]
+    | null;
+
   recipe_categories: {
     categories:
       | { id: string; name: string }
       | { id: string; name: string }[]
       | null;
   }[];
+
   recipe_ingredients: {
     ingredient: string;
+    quantity: string | null;
+    unit: string | null;
   }[];
+};
+
+type RecipeIngredient = {
+  name: string;
+  quantity: string | null;
+  unit: string | null;
 };
 
 type Recipe = {
@@ -43,17 +65,21 @@ type Recipe = {
   imageUrl: string | null;
   kitchenName: string | null;
   tags: string[];
-  ingredients: string[];
+  ingredients: RecipeIngredient[];
   createdAt: string | null;
 };
 
 export default function Home() {
-    const router = useRouter();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const [profileAvatar, setProfileAvatar] = useState<{
+  initial: string;
+  imageUrl: string | null;
+} | null>(null);
 
   // overlay state
   const [filterVisible, setFilterVisible] = useState(false);
@@ -85,9 +111,11 @@ export default function Home() {
           recipe_categories (
             categories ( id, name )
           ),
-          recipe_ingredients (
-            ingredient
-          )
+recipe_ingredients (
+  ingredient,
+  quantity,
+  unit
+)
         `
         )
         .order("created_at", { ascending: false });
@@ -99,36 +127,50 @@ export default function Home() {
         return;
       }
 
-      const mapped: Recipe[] =
-        (data as DbRecipe[] | null)?.map((r) => {
-          const kitchen =
-            r.kitchens && r.kitchens.length > 0 ? r.kitchens[0] : null;
+const mapped: Recipe[] =
+  (data ?? []).map((raw) => {
+    const r = raw as DbRecipe;
 
-          const tags =
-            r.recipe_categories?.flatMap((rc) => {
-              const cat = rc.categories;
-              if (!cat) return [];
-              if (Array.isArray(cat)) {
-                return cat.map((c) => c.name);
-              }
-              return [cat.name];
-            }) ?? [];
+    let kitchen: { id: string; name: string; type: string } | null = null;
 
-          const ingredients =
-            r.recipe_ingredients?.map((ri) => ri.ingredient) ?? [];
+    const kField = r.kitchens;
+    if (Array.isArray(kField)) {
+      kitchen = kField[0] ?? null;
+    } else if (kField && typeof kField === "object") {
+      kitchen = kField;
+    }
 
-          return {
-            id: r.id,
-            title: r.title,
-            description: r.description,
-            imageUrl:
-              r.image_url && r.image_url !== "NULL" ? r.image_url : null,
-            kitchenName: kitchen?.name ?? null,
-            tags,
-            ingredients,
-            createdAt: r.created_at,
-          };
-        }) ?? [];
+    const tags =
+      r.recipe_categories?.flatMap((rc) => {
+        const cat = rc.categories;
+        if (!cat) return [];
+        if (Array.isArray(cat)) {
+          return cat.map((c) => c.name);
+        }
+        return [cat.name];
+      }) ?? [];
+
+    // --- Koostisosad ---
+const ingredients =
+  r.recipe_ingredients?.map((ri) => ({
+    name: ri.ingredient,
+    quantity: ri.quantity,
+    unit: ri.unit,
+  })) ?? [];
+
+
+    return {
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      imageUrl:
+        r.image_url && r.image_url !== "NULL" ? r.image_url : null,
+      kitchenName: kitchen?.name ?? null,
+      tags,
+      ingredients,
+      createdAt: r.created_at,
+    };
+  });
 
       setRecipes(mapped);
 
@@ -147,6 +189,36 @@ export default function Home() {
 
     load();
   }, []);
+
+
+  useEffect(() => {
+  const loadAvatar = async () => {
+    const { data: auth } = await supabase.auth.getUser();
+    const user = auth.user;
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("username, profile_image_url")
+      .eq("id", user.id)
+      .single();
+
+    if (error || !data) {
+      console.error("Error loading avatar:", error);
+      return;
+    }
+
+    const username: string = data.username;
+    const initial = username.charAt(0).toUpperCase();
+
+    setProfileAvatar({
+      initial,
+      imageUrl: data.profile_image_url ?? null,
+    });
+  };
+
+  loadAvatar();
+}, []);
 
   // kõik köögid, mis retseptide seast tulevad
   const allKitchens = useMemo(() => {
@@ -170,26 +242,59 @@ export default function Home() {
   const visibleRecipes = useMemo(() => {
     let list = [...recipes];
 
-    // otsing
-    const q = search.trim().toLowerCase();
-    if (q) {
-      list = list.filter((r) => r.title.toLowerCase().includes(q));
-    }
+const q = search.trim().toLowerCase();
+if (q) {
+  // luba eraldada nii tühikutega kui ka komadega
+  const terms = q
+    .split(/[,\s]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  if (terms.length > 0) {
+    list = list.filter((r) => {
+      const title = (r.title || "").toLowerCase();
+
+      // toetame nii string- kui objekt-kujul koostisosi
+      const ingredientNames = (r.ingredients || []).map((ing: any) =>
+        typeof ing === "string"
+          ? ing.toLowerCase()
+          : (ing.name || "").toLowerCase()
+      );
+
+      const tagNames = (r.tags || []).map((t) => t.toLowerCase());
+
+      // iga otsingusõna peab leiduma kas nimes, koostisosades või märksõnades
+      return terms.every((term) => {
+        if (!term) return true;
+
+        const inTitle = title.includes(term);
+        const inIngredients = ingredientNames.some((name) =>
+          name.includes(term)
+        );
+        const inTags = tagNames.some((tag) => tag.includes(term));
+
+        return inTitle || inIngredients || inTags;
+      });
+    });
+  }
+}
 
     // köögifilter
-    if (selectedKitchens.length > 0) {
-      list = list.filter(
-        (r) =>
-          r.kitchenName && selectedKitchens.includes(r.kitchenName as string)
-      );
-    }
+if (
+  selectedKitchens.length > 0 &&
+  selectedKitchens.length < allKitchens.length
+) {
+  list = list.filter(
+    (r) => r.kitchenName && selectedKitchens.includes(r.kitchenName)
+  );
+}
 
     // märksõnad – AND loogika (kõik valitud tagid peavad retseptis olema)
-    if (selectedTags.length > 0) {
-      list = list.filter((r) =>
-        selectedTags.every((t) => r.tags.includes(t))
-      );
-    }
+if (selectedTags.length > 0 && selectedTags.length < allTags.length) {
+  list = list.filter((r) =>
+    selectedTags.every((t) => r.tags.includes(t))
+  );
+}
 
     // sorteerimine
     list.sort((a, b) => {
@@ -234,11 +339,9 @@ export default function Home() {
     return list;
   }, [recipes, search, selectedKitchens, selectedTags, sortMode]);
 
-  // --- Filtri handlerid ---
-  const handleClearFilters = () => {
-    setSelectedKitchens([]);
-    setSelectedTags([]);
-  };
+const handleClearFilters = () => {
+  setSelectedTags([]);
+};
 
   const toggleKitchen = (name: string) => {
     setSelectedKitchens((prev) =>
@@ -252,15 +355,16 @@ export default function Home() {
     );
   };
 
-  const handleSelectAllKitchens = () => {
-    setSelectedKitchens(allKitchens);
-  };
-
   const handleSelectAllTags = () => {
     setSelectedTags(allTags);
   };
 
-  return (
+return (
+  <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : undefined}
+    keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+  >
     <View style={styles.container}>
       {/* HEADER – Filtreeri / Sorteeri */}
       <View style={styles.header}>
@@ -284,7 +388,6 @@ export default function Home() {
       {error && <Text>{error}</Text>}
       {loading && <Text>Laen retsepte…</Text>}
 
-      {/* RETSEPTIDE LIST */}
       <FlatList
         data={visibleRecipes}
         keyExtractor={(item) => item.id}
@@ -298,29 +401,41 @@ export default function Home() {
             }
           />
         )}
+        keyboardShouldPersistTaps="handled"
       />
 
-      {/* FOOTER – Search + profiil */}
-      <View style={styles.footer}>
-        <View style={styles.searchBox}>
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search"
-            style={styles.searchInput}
-          />
-        </View>
+{/* FOOTER – Search + profiil */}
+<View style={styles.footer}>
+  <View style={styles.searchBox}>
+    <TextInput
+      value={search}
+      onChangeText={setSearch}
+      placeholder="Search"
+      style={styles.searchInput}
+    />
+  </View>
 
-        <View style={styles.footerRight}>
-          <TouchableOpacity
-            style={styles.circleButton}
-            onPress={() => router.push("/home/user")}>
-            <Text style={styles.circleButtonText}>P</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+  <View style={styles.footerRight}>
+    <TouchableOpacity
+      style={styles.circleButton}
+      activeOpacity={0.8}
+      onPress={() => router.push("/home/user")}
+    >
+      {profileAvatar?.imageUrl ? (
+        <Image
+          source={{ uri: profileAvatar.imageUrl }}
+          style={{ width: "100%", height: "100%", borderRadius: 999 }}
+        />
+      ) : (
+        <Text style={styles.circleButtonText}>
+          {profileAvatar?.initial ?? "P"}
+        </Text>
+      )}
+    </TouchableOpacity>
+  </View>
+</View>
 
-      {/* Ujuv + nupp */}
+      {/* + nupp, FilterRecipes, SortRecipes jne */}
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => console.log("Add recipe pressed")}
@@ -328,7 +443,6 @@ export default function Home() {
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
 
-      {/* FILTRI OVERLAY */}
       <FilterRecipes
         visible={filterVisible}
         onClose={() => setFilterVisible(false)}
@@ -339,11 +453,9 @@ export default function Home() {
         onClearAll={handleClearFilters}
         onToggleKitchen={toggleKitchen}
         onToggleTag={toggleTag}
-        onSelectAllKitchens={handleSelectAllKitchens}
         onSelectAllTags={handleSelectAllTags}
       />
 
-      {/* SORTEERIMISE OVERLAY */}
       <SortRecipes
         visible={sortVisible}
         onClose={() => setSortVisible(false)}
@@ -351,5 +463,7 @@ export default function Home() {
         onChangeSortMode={setSortMode}
       />
     </View>
-  );
+  </KeyboardAvoidingView>
+);
+
 }
