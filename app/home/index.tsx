@@ -1,5 +1,4 @@
-// app/home/index.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -16,6 +15,8 @@ import styles from "./styles";
 import RecipeListItem from "@/components/RecipeListItem";
 import { FilterRecipes } from "@/components/FilterRecipes";
 import { SortRecipes, SortMode } from "@/components/SortRecipes";
+import SearchIcon from "@/assets/images/luup.png";
+import AddIcon from "@/assets/images/add.png";
 
 type DbRecipe = {
   id: string;
@@ -74,11 +75,12 @@ export default function Home() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const searchInputRef = useRef<TextInput | null>(null);
 
   const [profileAvatar, setProfileAvatar] = useState<{
-  initial: string;
-  imageUrl: string | null;
-} | null>(null);
+    initial: string;
+    imageUrl: string | null;
+  } | null>(null);
 
   // overlay state
   const [filterVisible, setFilterVisible] = useState(false);
@@ -110,11 +112,11 @@ export default function Home() {
           recipe_categories (
             categories ( id, name )
           ),
-recipe_ingredients (
-  ingredient,
-  quantity,
-  unit
-)
+          recipe_ingredients (
+            ingredient,
+            quantity,
+            unit
+          )
         `
         )
         .order("created_at", { ascending: false });
@@ -126,50 +128,47 @@ recipe_ingredients (
         return;
       }
 
-const mapped: Recipe[] =
-  (data ?? []).map((raw) => {
-    const r = raw as DbRecipe;
+      const mapped: Recipe[] = (data ?? []).map((raw) => {
+        const r = raw as DbRecipe;
 
-    let kitchen: { id: string; name: string; type: string } | null = null;
+        let kitchen: { id: string; name: string; type: string } | null = null;
 
-    const kField = r.kitchens;
-    if (Array.isArray(kField)) {
-      kitchen = kField[0] ?? null;
-    } else if (kField && typeof kField === "object") {
-      kitchen = kField;
-    }
-
-    const tags =
-      r.recipe_categories?.flatMap((rc) => {
-        const cat = rc.categories;
-        if (!cat) return [];
-        if (Array.isArray(cat)) {
-          return cat.map((c) => c.name);
+        const kField = r.kitchens;
+        if (Array.isArray(kField)) {
+          kitchen = kField[0] ?? null;
+        } else if (kField && typeof kField === "object") {
+          kitchen = kField;
         }
-        return [cat.name];
-      }) ?? [];
 
-    // --- Koostisosad ---
-const ingredients =
-  r.recipe_ingredients?.map((ri) => ({
-    name: ri.ingredient,
-    quantity: ri.quantity,
-    unit: ri.unit,
-  })) ?? [];
+        const tags =
+          r.recipe_categories?.flatMap((rc) => {
+            const cat = rc.categories;
+            if (!cat) return [];
+            if (Array.isArray(cat)) {
+              return cat.map((c) => c.name);
+            }
+            return [cat.name];
+          }) ?? [];
 
+        // --- Koostisosad ---
+        const ingredients =
+          r.recipe_ingredients?.map((ri) => ({
+            name: ri.ingredient,
+            quantity: ri.quantity,
+            unit: ri.unit,
+          })) ?? [];
 
-    return {
-      id: r.id,
-      title: r.title,
-      description: r.description,
-      imageUrl:
-        r.image_url && r.image_url !== "NULL" ? r.image_url : null,
-      kitchenName: kitchen?.name ?? null,
-      tags,
-      ingredients,
-      createdAt: r.created_at,
-    };
-  });
+        return {
+          id: r.id,
+          title: r.title,
+          description: r.description,
+          imageUrl: r.image_url && r.image_url !== "NULL" ? r.image_url : null,
+          kitchenName: kitchen?.name ?? null,
+          tags,
+          ingredients,
+          createdAt: r.created_at,
+        };
+      });
 
       setRecipes(mapped);
 
@@ -189,35 +188,34 @@ const ingredients =
     load();
   }, []);
 
-
   useEffect(() => {
-  const loadAvatar = async () => {
-    const { data: auth } = await supabase.auth.getUser();
-    const user = auth.user;
-    if (!user) return;
+    const loadAvatar = async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth.user;
+      if (!user) return;
 
-    const { data, error } = await supabase
-      .from("users")
-      .select("username, profile_image_url")
-      .eq("id", user.id)
-      .single();
+      const { data, error } = await supabase
+        .from("users")
+        .select("username, profile_image_url")
+        .eq("id", user.id)
+        .single();
 
-    if (error || !data) {
-      console.error("Error loading avatar:", error);
-      return;
-    }
+      if (error || !data) {
+        console.error("Error loading avatar:", error);
+        return;
+      }
 
-    const username: string = data.username;
-    const initial = username.charAt(0).toUpperCase();
+      const username: string = data.username;
+      const initial = username.charAt(0).toUpperCase();
 
-    setProfileAvatar({
-      initial,
-      imageUrl: data.profile_image_url ?? null,
-    });
-  };
+      setProfileAvatar({
+        initial,
+        imageUrl: data.profile_image_url ?? null,
+      });
+    };
 
-  loadAvatar();
-}, []);
+    loadAvatar();
+  }, []);
 
   // kõik köögid, mis retseptide seast tulevad
   const allKitchens = useMemo(() => {
@@ -241,59 +239,57 @@ const ingredients =
   const visibleRecipes = useMemo(() => {
     let list = [...recipes];
 
-const q = search.trim().toLowerCase();
-if (q) {
-  // luba eraldada nii tühikutega kui ka komadega
-  const terms = q
-    .split(/[,\s]+/)
-    .map((t) => t.trim())
-    .filter(Boolean);
+    const q = search.trim().toLowerCase();
+    if (q) {
+      // luba eraldada nii tühikutega kui ka komadega
+      const terms = q
+        .split(/[,\s]+/)
+        .map((t) => t.trim())
+        .filter(Boolean);
 
-  if (terms.length > 0) {
-    list = list.filter((r) => {
-      const title = (r.title || "").toLowerCase();
+      if (terms.length > 0) {
+        list = list.filter((r) => {
+          const title = (r.title || "").toLowerCase();
 
-      // toetame nii string- kui objekt-kujul koostisosi
-      const ingredientNames = (r.ingredients || []).map((ing: any) =>
-        typeof ing === "string"
-          ? ing.toLowerCase()
-          : (ing.name || "").toLowerCase()
-      );
+          // toetame nii string- kui objekt-kujul koostisosi
+          const ingredientNames = (r.ingredients || []).map((ing: any) =>
+            typeof ing === "string"
+              ? ing.toLowerCase()
+              : (ing.name || "").toLowerCase()
+          );
 
-      const tagNames = (r.tags || []).map((t) => t.toLowerCase());
+          const tagNames = (r.tags || []).map((t) => t.toLowerCase());
 
-      // iga otsingusõna peab leiduma kas nimes, koostisosades või märksõnades
-      return terms.every((term) => {
-        if (!term) return true;
+          // iga otsingusõna peab leiduma kas nimes, koostisosades või märksõnades
+          return terms.every((term) => {
+            if (!term) return true;
 
-        const inTitle = title.includes(term);
-        const inIngredients = ingredientNames.some((name) =>
-          name.includes(term)
-        );
-        const inTags = tagNames.some((tag) => tag.includes(term));
+            const inTitle = title.includes(term);
+            const inIngredients = ingredientNames.some((name) =>
+              name.includes(term)
+            );
+            const inTags = tagNames.some((tag) => tag.includes(term));
 
-        return inTitle || inIngredients || inTags;
-      });
-    });
-  }
-}
+            return inTitle || inIngredients || inTags;
+          });
+        });
+      }
+    }
 
     // köögifilter
-if (
-  selectedKitchens.length > 0 &&
-  selectedKitchens.length < allKitchens.length
-) {
-  list = list.filter(
-    (r) => r.kitchenName && selectedKitchens.includes(r.kitchenName)
-  );
-}
+    if (
+      selectedKitchens.length > 0 &&
+      selectedKitchens.length < allKitchens.length
+    ) {
+      list = list.filter(
+        (r) => r.kitchenName && selectedKitchens.includes(r.kitchenName)
+      );
+    }
 
     // märksõnad – AND loogika (kõik valitud tagid peavad retseptis olema)
-if (selectedTags.length > 0 && selectedTags.length < allTags.length) {
-  list = list.filter((r) =>
-    selectedTags.every((t) => r.tags.includes(t))
-  );
-}
+    if (selectedTags.length > 0 && selectedTags.length < allTags.length) {
+      list = list.filter((r) => selectedTags.every((t) => r.tags.includes(t)));
+    }
 
     // sorteerimine
     list.sort((a, b) => {
@@ -338,9 +334,9 @@ if (selectedTags.length > 0 && selectedTags.length < allTags.length) {
     return list;
   }, [recipes, search, selectedKitchens, selectedTags, sortMode]);
 
-const handleClearFilters = () => {
-  setSelectedTags([]);
-};
+  const handleClearFilters = () => {
+    setSelectedTags([]);
+  };
 
   const toggleKitchen = (name: string) => {
     setSelectedKitchens((prev) =>
@@ -358,64 +354,72 @@ const handleClearFilters = () => {
     setSelectedTags(allTags);
   };
 
-return (
-  <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === "ios" ? "padding" : undefined}
-    keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
-  >
-    <View style={styles.container}>
-      {/* HEADER – Filtreeri / Sorteeri */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => setFilterVisible(true)}
-        >
-          <Text style={styles.headerButtonText}>Filtreeri</Text>
-        </TouchableOpacity>
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+    >
+      <View style={styles.container}>
+        {/* HEADER – Filtreeri / Sorteeri */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setFilterVisible(true)}
+          >
+            <Text style={styles.headerButtonText}>Filtreeri</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => setSortVisible(true)}
-        >
-          <Text style={styles.headerButtonText}>Sorteeri</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setSortVisible(true)}
+          >
+            <Text style={styles.headerButtonText}>Sorteeri</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={{ height: 16 }} />
+        <View style={{ height: 16 }} />
 
-      {error && <Text>{error}</Text>}
-      {loading && <Text>Laen retsepte…</Text>}
+        {error && <Text>{error}</Text>}
+        {loading && <Text>Laen retsepte…</Text>}
 
-      <FlatList
-        data={visibleRecipes}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <RecipeListItem
-            recipe={item}
-            isExpanded={expandedId === item.id}
-            onPress={() =>
-              setExpandedId((prev) => (prev === item.id ? null : item.id))
-            }
-          />
-        )}
-        keyboardShouldPersistTaps="handled"
-      />
+        <FlatList
+          data={visibleRecipes}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <RecipeListItem
+              recipe={item}
+              isExpanded={expandedId === item.id}
+              onPress={() =>
+                setExpandedId((prev) => (prev === item.id ? null : item.id))
+              }
+            />
+          )}
+          keyboardShouldPersistTaps="handled"
+        />
 
-      {/* FOOTER – Search + profiil */}
-{/* FOOTER – Search + profiil */}
-<View style={styles.footer}>
-  <View style={styles.searchBox}>
-    <TextInput
-      value={search}
-      onChangeText={setSearch}
-      placeholder="Search"
-      style={styles.searchInput}
-    />
-  </View>
+        {/* FOOTER – Search + profiil */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.searchBox}
+            activeOpacity={1}
+            onPress={() => searchInputRef.current?.focus()}
+          >
+            <Image source={SearchIcon} style={styles.searchIcon} />
+            <TextInput
+              ref={searchInputRef}
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search"
+              placeholderTextColor="#9A9184"
+              style={styles.searchInput}
+            />
+          </TouchableOpacity>
 
-  <View style={styles.footerRight}>
+          <View style={styles.footerRight}>
+  <View style={styles.profileWrapper}>
+    {/* Profiilipilt */}
     <TouchableOpacity
       style={styles.circleButton}
       activeOpacity={0.8}
@@ -432,38 +436,40 @@ return (
         </Text>
       )}
     </TouchableOpacity>
+
+    {/* + nupp profiili peal */}
+    <TouchableOpacity
+      style={styles.addRecipeButton}
+      activeOpacity={0.9}
+      onPress={() => console.log("Add recipe pressed")}
+    >
+      <Image source={AddIcon} style={styles.addIconImage} />
+    </TouchableOpacity>
   </View>
 </View>
 
-      {/* + nupp, FilterRecipes, SortRecipes jne */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => console.log("Add recipe pressed")}
-      >
-        <Text style={styles.addButtonText}>+</Text>
-      </TouchableOpacity>
+        </View>
 
-      <FilterRecipes
-        visible={filterVisible}
-        onClose={() => setFilterVisible(false)}
-        allKitchens={allKitchens}
-        allTags={allTags}
-        selectedKitchens={selectedKitchens}
-        selectedTags={selectedTags}
-        onClearAll={handleClearFilters}
-        onToggleKitchen={toggleKitchen}
-        onToggleTag={toggleTag}
-        onSelectAllTags={handleSelectAllTags}
-      />
+        <FilterRecipes
+          visible={filterVisible}
+          onClose={() => setFilterVisible(false)}
+          allKitchens={allKitchens}
+          allTags={allTags}
+          selectedKitchens={selectedKitchens}
+          selectedTags={selectedTags}
+          onClearAll={handleClearFilters}
+          onToggleKitchen={toggleKitchen}
+          onToggleTag={toggleTag}
+          onSelectAllTags={handleSelectAllTags}
+        />
 
-      <SortRecipes
-        visible={sortVisible}
-        onClose={() => setSortVisible(false)}
-        sortMode={sortMode}
-        onChangeSortMode={setSortMode}
-      />
-    </View>
-  </KeyboardAvoidingView>
-);
-
+        <SortRecipes
+          visible={sortVisible}
+          onClose={() => setSortVisible(false)}
+          sortMode={sortMode}
+          onChangeSortMode={setSortMode}
+        />
+      </View>
+    </KeyboardAvoidingView>
+  );
 }

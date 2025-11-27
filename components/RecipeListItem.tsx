@@ -36,9 +36,9 @@ export const RecipeListItem: React.FC<Props> = ({
   isExpanded = false,
   onPress,
 }) => {
-const maxIngredientsToShow = 5;
-const visibleIngredients = recipe.ingredients.slice(0, maxIngredientsToShow);
-const hasMoreIngredients = recipe.ingredients.length > maxIngredientsToShow;
+  const maxIngredientsToShow = 5;
+  const visibleIngredients = recipe.ingredients.slice(0, maxIngredientsToShow);
+  const hasMoreIngredients = recipe.ingredients.length > maxIngredientsToShow;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -54,24 +54,23 @@ const hasMoreIngredients = recipe.ingredients.length > maxIngredientsToShow;
             {/* Koostisosad */}
             <View style={styles.ingredientsBox}>
               <Text style={styles.ingredientsTitle}>Koostisosad</Text>
-{visibleIngredients.map((ing, idx) => {
-  const qtyPart =
-    ing.quantity && ing.unit
-      ? `${ing.quantity} ${ing.unit}`
-      : ing.quantity || ing.unit || "";
+              {visibleIngredients.map((ing, idx) => {
+                const qtyPart =
+                  ing.quantity && ing.unit
+                    ? `${ing.quantity} ${ing.unit}`
+                    : ing.quantity || ing.unit || "";
 
-  return (
-    <Text key={idx} style={styles.ingredientsLine}>
-      {/* nime osa */}
-      • {ing.name}
-      {/* kui on mingi kogus/ühik, lisame vahe ja numbri */}
-      {qtyPart ? ` ${qtyPart}` : ""}
-    </Text>
-  );
-})}
-{hasMoreIngredients && (
-  <Text style={styles.ingredientsMore}>…</Text>
-)}
+                return (
+                  <Text key={idx} style={styles.ingredientsLine}>
+                    {/* nime osa */}• {ing.name}
+                    {/* kui on mingi kogus/ühik, lisame vahe ja numbri */}
+                    {qtyPart ? ` ${qtyPart}` : ""}
+                  </Text>
+                );
+              })}
+              {hasMoreIngredients && (
+                <Text style={styles.ingredientsMore}>…</Text>
+              )}
             </View>
 
             {/* Pilt + nool overlay */}
@@ -129,24 +128,31 @@ type Styles = {
 
 const styles = StyleSheet.create<Styles>({
   container: {
-    borderRadius: 20,
+    borderRadius: 15,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 18,
     marginBottom: 8,
     backgroundColor: "#4F6B60",
+      // Drop shadow (iOS)
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+
+    // Drop shadow (Android)
+    elevation: 5,
   },
   containerExpanded: {
     backgroundColor: "#FFE9A6",
   },
   title: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "600",
   },
   expandedContent: {
     marginTop: 12,
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12,
   },
   ingredientsBox: {
     flex: 1,
@@ -174,7 +180,7 @@ const styles = StyleSheet.create<Styles>({
   imageContainer: {
     width: "100%",
     height: "100%",
-    borderRadius: 16,
+    borderRadius: 10,
     overflow: "hidden",
     backgroundColor: "#ccc",
   },
@@ -191,23 +197,23 @@ const styles = StyleSheet.create<Styles>({
   imageText: {
     fontSize: 12,
   },
-arrowCircle: {
-  position: "absolute",
-  right: 6,
-  top: "50%",
-  transform: [{ translateY: -24 }],
-  width: 48,
-  height: 48,
-  borderRadius: 24,
-  overflow: "hidden",        // et pilt jääks ringi sisse
-  alignItems: "center",
-  justifyContent: "center",
-},
-arrowImage: {
-  width: "100%",              // täida kogu ring
-  height: "100%",
-  resizeMode: "cover",        // või "contain", kui nii parem näeb
-},
+  arrowCircle: {
+    position: "absolute",
+    right: 6,
+    top: "50%",
+    transform: [{ translateY: -24 }],
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: "hidden", // et pilt jääks ringi sisse
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  arrowImage: {
+    width: "100%", // täida kogu ring
+    height: "100%",
+    resizeMode: "cover", // või "contain", kui nii parem näeb
+  },
 });
 
 export default RecipeListItem;
