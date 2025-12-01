@@ -6,6 +6,8 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 
+import HomeButton from "@/components/HomeButton";
+import NotificationButton from "@/components/NotificationButton";
 import {
   ActivityIndicator,
   Alert,
@@ -238,25 +240,9 @@ const pickImage = async () => {
         </TouchableOpacity>
 
         <View style={styles.bottomButtons}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => router.push("/home")}
-          >
-            <Image 
-              source={require("@/assets/images/Home.png")} 
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.iconButton} 
-            onPress={() => router.push("/home/user/notifications")}
-          >
-            <Image 
-              source={require("@/assets/images/chat_bubble.png")} 
-              style={styles.icon}
-            />
-          </TouchableOpacity>
+          <HomeButton />
+          <NotificationButton />
+          
         </View>
       </View>
 
