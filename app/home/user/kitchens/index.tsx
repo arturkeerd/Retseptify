@@ -1,4 +1,5 @@
 import HomeButton from "@/components/HomeButton";
+import KitchenColorPicker from "@/components/KitchenColorPicker";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -29,6 +30,8 @@ export default function Kitchens() {
   const [kitchens, setKitchens] = useState<Kitchen[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [colorPickerVisible, setColorPickerVisible] = useState(false);
+  const [selectedKitchen, setSelectedKitchen] = useState<Kitchen | null>(null);
 
   useEffect(() => {
     loadData();
@@ -78,7 +81,7 @@ export default function Kitchens() {
 
   const getKitchenIcon = (name: string) => {
     const lowerName = name.toLowerCase();
-    if (lowerName.includes("isiklik")) return "✓";
+    if (lowerName.includes("isiklik") || lowerName.includes("minu")) return "✓";
     if (lowerName.includes("paral")) return "✗";
     if (lowerName.includes("kampus")) return "⚙";
     if (lowerName.includes("pompei")) return "✎";
@@ -86,14 +89,19 @@ export default function Kitchens() {
     return "◆";
   };
 
-  const getKitchenColor = (name: string, defaultColor: string) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes("isiklik")) return "#C8E6C9"; // green
-    if (lowerName.includes("paral")) return "#FFCDD2"; // red
-    if (lowerName.includes("kampus")) return "#CFD8DC"; // gray
-    if (lowerName.includes("pompei")) return "#FFF9C4"; // yellow
-    if (lowerName.includes("humal")) return "#B0BEC5"; // dark gray
-    return defaultColor || "#FFFFFF";
+  const handleColorEdit = (kitchen: Kitchen) => {
+    setSelectedKitchen(kitchen);
+    setColorPickerVisible(true);
+  };
+
+  const handleColorChanged = (newColor: string) => {
+    if (selectedKitchen) {
+      setKitchens((prev) =>
+        prev.map((k) =>
+          k.id === selectedKitchen.id ? { ...k, color: newColor } : k
+        )
+      );
+    }
   };
 
   if (loading) {
@@ -129,20 +137,33 @@ export default function Kitchens() {
 
         <View style={styles.kitchensList}>
           {kitchens.map((kitchen) => (
-            <TouchableOpacity
-              key={kitchen.id}
-              style={[
-                styles.kitchenButton,
-                { backgroundColor: getKitchenColor(kitchen.name, kitchen.color) },
-              ]}
-              onPress={() => {
-                // Navigate to recipes filtered by kitchen
-                router.push(`/home?kitchen=${kitchen.id}`);
-              }}
-            >
-              <Text style={styles.kitchenIcon}>{getKitchenIcon(kitchen.name)}</Text>
-              <Text style={styles.kitchenName}>{kitchen.name}</Text>
-            </TouchableOpacity>
+            <View key={kitchen.id} style={styles.kitchenRow}>
+              <TouchableOpacity
+                style={[
+                  styles.kitchenButton,
+                  { backgroundColor: kitchen.color || "#FFFFFF" },
+                ]}
+                onPress={() => {
+                  router.push(`/home?kitchen=${kitchen.id}`);
+                }}
+              >
+                <Text style={styles.kitchenIcon}>
+                  {getKitchenIcon(kitchen.name)}
+                </Text>
+                <Text style={styles.kitchenName}>{kitchen.name}</Text>
+              </TouchableOpacity>
+
+              {/* Color edit button */}
+              <TouchableOpacity
+                style={[
+                  styles.colorEditButton,
+                  { backgroundColor: kitchen.color || "#FFFFFF" },
+                ]}
+                onPress={() => handleColorEdit(kitchen)}
+              >
+                <Text style={styles.colorEditIcon}>✎</Text>
+              </TouchableOpacity>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -151,7 +172,6 @@ export default function Kitchens() {
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
-            // Add new kitchen functionality
             console.log("Add kitchen");
           }}
         >
@@ -178,6 +198,17 @@ export default function Kitchens() {
           )}
         </TouchableOpacity>
       </View>
+
+      {selectedKitchen && (
+        <KitchenColorPicker
+          visible={colorPickerVisible}
+          onClose={() => setColorPickerVisible(false)}
+          kitchenId={selectedKitchen.id}
+          kitchenName={selectedKitchen.name}
+          currentColor={selectedKitchen.color}
+          onColorChanged={handleColorChanged}
+        />
+      )}
     </View>
   );
 }

@@ -39,7 +39,8 @@ const styles = StyleSheet.create({
   kitchensList: {
     gap: 16,
   },
-  kitchenButton: {
+   kitchenButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 20,
@@ -123,6 +124,29 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: "700",
     color: "#9B8FE8",
+  },
+    kitchenRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  colorEditButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#5D4037",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  colorEditIcon: {
+    fontSize: 20,
+    color: "#5D4037",
   },
 });
 
