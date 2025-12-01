@@ -1,4 +1,4 @@
-import { StyleSheet, ViewStyle, TextStyle } from "react-native";
+import { StyleSheet, ViewStyle, TextStyle, ImageStyle } from "react-native";
 
 type Styles = {
   container: ViewStyle;
@@ -10,16 +10,18 @@ type Styles = {
   searchBox: ViewStyle;
   searchInput: TextStyle;
   footerRight: ViewStyle;
+  searchIcon: ImageStyle;
   circleButton: ViewStyle;
   circleButtonText: TextStyle;
-  addButton: ViewStyle;
-  addButtonText: TextStyle;
+  profileWrapper: ViewStyle;
+  addRecipeButton: ViewStyle;
+  addIconImage: ImageStyle;
 };
 
 const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
-    paddingTop: 40,
+    paddingTop: 26,
     paddingHorizontal: 16,
     paddingBottom: 80, // ruum footerile
     backgroundColor: "#F4F1EC", // marble tausta aseaine
@@ -38,15 +40,26 @@ const styles = StyleSheet.create<Styles>({
   headerButton: {
     flex: 1,
     borderRadius: 24,
-    paddingVertical: 10,
+    paddingVertical: 20,
     backgroundColor: "#F5F9E9",
     alignItems: "center",
     justifyContent: "center",
-    elevation: 3,
-  },
+      // Drop shadow (iOS)
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+
+    // Drop shadow (Android)
+    elevation: 5,
+    },
   headerButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
+  fontSize: 14,
+  fontWeight: "500",
+  color: "#1F2933",
+  textShadowColor: "rgba(0,0,0,0.15)",
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 1,
   },
 
   footer: {
@@ -63,27 +76,40 @@ const styles = StyleSheet.create<Styles>({
 
   searchBox: {
     flex: 1,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#F5F9E9",
-    paddingHorizontal: 16,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: "#F5F5DC",
+    paddingHorizontal: 20,
     justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#3E567D",
   },
+
   searchInput: {
     fontSize: 14,
+    flex: 1,
+  },
+
+  searchIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 8,
+    resizeMode: "contain",
+    opacity: 0.6,
   },
 
   footerRight: {
-    marginLeft: 12,
-    flexDirection: "row",
+    marginLeft: 16,
+    justifyContent: "center",
     alignItems: "center",
-    gap: 12,
   },
 
   circleButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: "#DDD",
     alignItems: "center",
     justifyContent: "center",
@@ -93,22 +119,35 @@ const styles = StyleSheet.create<Styles>({
     fontWeight: "700",
   },
 
-  addButton: {
-    position: "absolute",
-    right: 80,
-    bottom: 80,
-    width: 60,
-    height: 60,
-    borderRadius: 20,
-    backgroundColor: "#F5E2B8",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
+  profileWrapper: {
+  position: "relative",
+  width: 100,
+  height: 100,
   },
-  addButtonText: {
-    fontSize: 28,
-    fontWeight: "700",
+
+addRecipeButton: {
+  position: "absolute",
+  top: -70,        // tõstab + natuke profiilipildi kohale
+  right: 15,       // nihuta vasak/parem, kuni Figma matchib
+  width: 64,
+  height: 64,
+  borderRadius: 24,
+  backgroundColor: "#ffffffff", // Figma kollakas nupp
+  alignItems: "center",
+  justifyContent: "center",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.2,
+  shadowRadius: 6,
+  elevation: 4,
+},
+
+addIconImage: {
+    width: 75,
+    height: 75,
+    resizeMode: "contain",
   },
+
 });
 
 export default styles;
