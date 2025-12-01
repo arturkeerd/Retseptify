@@ -1,15 +1,16 @@
+import AddKitchenButton from "@/components/AddKitchenButton";
+import CreateKitchenModal from "@/components/CreateKitchenModal";
 import HomeButton from "@/components/HomeButton";
-import KitchenColorPicker from "@/components/KitchenColorPicker";
+import ProfileButton from "@/components/ProfileButton";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import styles from "./styles";
 
@@ -20,24 +21,17 @@ type Kitchen = {
   color: string;
 };
 
-type UserProfile = {
-  username: string;
-  profile_image_url: string | null;
-};
-
 export default function Kitchens() {
   const router = useRouter();
   const [kitchens, setKitchens] = useState<Kitchen[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [colorPickerVisible, setColorPickerVisible] = useState(false);
-  const [selectedKitchen, setSelectedKitchen] = useState<Kitchen | null>(null);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
 
   useEffect(() => {
-    loadData();
+    loadKitchens();
   }, []);
 
-  const loadData = async () => {
+  const loadKitchens = async () => {
     setLoading(true);
 
     const {
@@ -50,18 +44,6 @@ export default function Kitchens() {
       return;
     }
 
-    // Load user profile
-    const { data: userData } = await supabase
-      .from("users")
-      .select("username, profile_image_url")
-      .eq("id", user.id)
-      .single();
-
-    if (userData) {
-      setProfile(userData);
-    }
-
-    // Get kitchens where user is owner or member
     const { data, error } = await supabase
       .from("kitchen_members")
       .select("kitchens(id, name, type, color)")
@@ -90,18 +72,8 @@ export default function Kitchens() {
   };
 
   const handleColorEdit = (kitchen: Kitchen) => {
-    setSelectedKitchen(kitchen);
-    setColorPickerVisible(true);
-  };
-
-  const handleColorChanged = (newColor: string) => {
-    if (selectedKitchen) {
-      setKitchens((prev) =>
-        prev.map((k) =>
-          k.id === selectedKitchen.id ? { ...k, color: newColor } : k
-        )
-      );
-    }
+    // TODO: Open color picker modal
+    console.log("Edit color for:", kitchen.name);
   };
 
   if (loading) {
@@ -115,26 +87,6 @@ export default function Kitchens() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.profileSection}>
-          <TouchableOpacity
-            style={styles.profileButton}
-            onPress={() => router.push("/home/user")}
-          >
-            {profile?.profile_image_url ? (
-              <Image
-                source={{ uri: profile.profile_image_url }}
-                style={styles.profileImage}
-              />
-            ) : (
-              <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderText}>
-                  {profile?.username.charAt(0).toUpperCase() || "U"}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-
         <View style={styles.kitchensList}>
           {kitchens.map((kitchen) => (
             <View key={kitchen.id} style={styles.kitchenRow}>
@@ -151,17 +103,17 @@ export default function Kitchens() {
                   {getKitchenIcon(kitchen.name)}
                 </Text>
                 <Text style={styles.kitchenName}>{kitchen.name}</Text>
-              </TouchableOpacity>
 
-              {/* Color edit button */}
-              <TouchableOpacity
-                style={[
-                  styles.colorEditButton,
-                  { backgroundColor: kitchen.color || "#FFFFFF" },
-                ]}
-                onPress={() => handleColorEdit(kitchen)}
-              >
-                <Text style={styles.colorEditIcon}>✎</Text>
+                {/* Edit button INSIDE kitchen button */}
+                <TouchableOpacity
+                  style={[
+                    styles.colorEditButton,
+                    { backgroundColor: kitchen.color || "#FFFFFF" },
+                  ]}
+                  onPress={() => handleColorEdit(kitchen)}
+                >
+                  <Text style={styles.colorEditIcon}>✎</Text>
+                </TouchableOpacity>
               </TouchableOpacity>
             </View>
           ))}
@@ -169,55 +121,27 @@ export default function Kitchens() {
       </ScrollView>
 
       <View style={styles.bottomContainer}>
-          {/* Vasak pool - Add button */}
-          <View style={styles.leftSide}>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => {
-                console.log("Add kitchen");
-              }}
-            >
-              <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Keskel - HomeButton */}
-          <View style={styles.centerSide}>
-            <HomeButton />
-          </View>
-          
-          {/* Parem pool - ProfileButton */}
-          <View style={styles.rightSide}>
-            <TouchableOpacity
-              style={styles.profileButtonBottom}
-              onPress={() => router.push("/home/user")}
-            >
-              {profile?.profile_image_url ? (
-                <Image
-                  source={{ uri: profile.profile_image_url }}
-                  style={styles.profileImageSmall}
-                />
-              ) : (
-                <View style={styles.placeholderImageSmall}>
-                  <Text style={styles.placeholderTextSmall}>
-                    {profile?.username.charAt(0).toUpperCase() || "U"}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+        {/* Vasak pool - Add button */}
+        <View style={styles.leftSide}>
+          <AddKitchenButton onPress={() => setCreateModalVisible(true)} />
         </View>
 
-      {selectedKitchen && (
-        <KitchenColorPicker
-          visible={colorPickerVisible}
-          onClose={() => setColorPickerVisible(false)}
-          kitchenId={selectedKitchen.id}
-          kitchenName={selectedKitchen.name}
-          currentColor={selectedKitchen.color}
-          onColorChanged={handleColorChanged}
-        />
-      )}
+        {/* Keskel - HomeButton */}
+        <View style={styles.centerSide}>
+          <HomeButton />
+        </View>
+
+        {/* Parem pool - ProfileButton */}
+        <View style={styles.rightSide}>
+          <ProfileButton />
+        </View>
+      </View>
+
+      <CreateKitchenModal
+        visible={createModalVisible}
+        onClose={() => setCreateModalVisible(false)}
+        onKitchenCreated={loadKitchens}
+      />
     </View>
   );
 }

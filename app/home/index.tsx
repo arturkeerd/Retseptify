@@ -2,10 +2,10 @@
 import AddIcon from "@/assets/images/add.png";
 import SearchIcon from "@/assets/images/luup.png";
 import { FilterRecipes } from "@/components/FilterRecipes";
-import ProfileButton from "@/components/ProfileButton";
 import RecipeListItem from "@/components/RecipeListItem";
 import { SortMode, SortRecipes } from "@/components/SortRecipes";
 import { supabase } from "@/lib/supabase";
+import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
@@ -420,8 +420,23 @@ export default function Home() {
 
           <View style={styles.footerRight}>
             <View style={styles.profileWrapper}>
-              {/* Profiilipilt - nüüd komponendina */}
-              <ProfileButton />
+              {/* Profiilipilt */}
+              <TouchableOpacity
+                style={styles.circleButton}
+                activeOpacity={0.8}
+                onPress={() => router.push("/home/user")}
+              >
+                {profileAvatar?.imageUrl ? (
+                  <Image
+                    source={{ uri: profileAvatar.imageUrl }}
+                    style={{ width: "100%", height: "100%", borderRadius: 999 }}
+                  />
+                ) : (
+                  <Text style={styles.circleButtonText}>
+                    {profileAvatar?.initial ?? "P"}
+                  </Text>
+                )}
+              </TouchableOpacity>
 
               {/* + nupp profiili peal */}
               <TouchableOpacity

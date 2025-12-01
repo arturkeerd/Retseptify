@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    position: "relative",
   },
   kitchenIcon: {
     fontSize: 32,
@@ -143,6 +144,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   colorEditButton: {
+    position: "absolute", 
+    right: 12,
     width: 50,
     height: 50,
     borderRadius: 25,
