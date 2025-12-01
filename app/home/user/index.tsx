@@ -1,16 +1,18 @@
 import BackgroundColorPicker from "@/components/BackgroundColorPicker";
+import ChangeNameModal from "@/components/ChangeNameModal";
+import ChangePasswordModal from "@/components/ChangePasswordModal";
 import { supabase } from "@/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import styles from "./styles";
 
@@ -30,6 +32,8 @@ export default function Profile() {
   const [username, setUsername] = useState("");
   const [backgroundColor, setBackgroundColor] = useState("#E8E6E1");
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
+  const [changeNameVisible, setChangeNameVisible] = useState(false);
+  const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -63,6 +67,10 @@ export default function Profile() {
 
     setLoading(false);
   };
+
+  const handleChangePassword = () => {
+  setChangePasswordVisible(true);
+};
 
 const pickImage = async () => {
   const permissionResult =
@@ -146,9 +154,6 @@ const pickImage = async () => {
     }
   };
 
-  const handleChangePassword = () => {
-    Alert.alert("Coming soon", "Password change feature coming soon!");
-  };
 
   const handleManageKitchens = () => {
     router.push("/home/user/kitchens");
@@ -209,17 +214,16 @@ const pickImage = async () => {
             style={styles.editIcon}
             onPress={() => setColorPickerVisible(true)}
           >
-            <Text style={styles.editIconText}>✎</Text>
+            <View style={[styles.colorPreview, { backgroundColor: backgroundColor }]} />
           </TouchableOpacity>
         </TouchableOpacity>
 
-        <TextInput
-          value={username}
-          onChangeText={setUsername}
+        <TouchableOpacity 
           style={styles.usernameInput}
-          onBlur={saveUsername}
-          autoCapitalize="none"
-        />
+          onPress={() => setChangeNameVisible(true)}
+        >
+          <Text style={styles.usernameText}>{username}</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
           <Text style={styles.buttonText}>Muuda parool</Text>
@@ -261,6 +265,23 @@ const pickImage = async () => {
         onClose={() => setColorPickerVisible(false)}
         onSelectColor={setBackgroundColor}
         currentColor={backgroundColor}
+      />
+
+      <ChangeNameModal
+        visible={changeNameVisible}
+        onClose={() => setChangeNameVisible(false)}
+        currentName={username}
+        onNameChanged={(newName) => {
+          setUsername(newName);
+          if (profile) {
+            setProfile({ ...profile, username: newName });
+          }
+        }}
+      />
+
+      <ChangePasswordModal
+        visible={changePasswordVisible}
+        onClose={() => setChangePasswordVisible(false)}
       />
     </View>
   );
