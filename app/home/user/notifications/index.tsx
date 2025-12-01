@@ -1,111 +1,150 @@
+import HomeButton from "@/components/HomeButton";
 import { supabase } from "@/lib/supabase";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Modal,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import styles from "./styles";
 
-type Kitchen = {
+type Notification = {
   id: string;
-  name: string;
-  unreadCount: number;
-  lastMessage?: string;
-  color: string;
+  title: string;
+  body: string | null;
+  recipe_id: string;
+  kitchen_id: string;
+  is_read: boolean;
+  created_at: string;
+  recipes: {
+    title: string;
+    image_url: string | null;
+  } | null;
+  kitchens: {
+    name: string;
+    color: string;
+  } | null;
 };
 
-// Värvid köökidele (nagu Figmas)
-const KITCHEN_COLORS = [
-  "#FFB3BA", // punane
-  "#FFFFBA", // kollane
-  "#FFFFFF", // valge
-  "#B0B0B0", // hall
-  "#B0B0B0", // hall
-  "#FFB3BA", // roosa
-  "#FFB3BA", // roosa
-];
-
 export default function Notifications() {
-  const [kitchens, setKitchens] = useState<Kitchen[]>([]);
+  const router = useRouter();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profileAvatar, setProfileAvatar] = useState<{
-    initial: string;
-    imageUrl: string | null;
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [userProfile, setUserProfile] = useState<{
+    username: string;
+    profile_image_url: string | null;
   } | null>(null);
 
   useEffect(() => {
-    loadKitchens();
-    loadAvatar();
+    loadNotifications();
+    loadUserProfile();
   }, []);
 
-  const loadAvatar = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const loadUserProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("users")
       .select("username, profile_image_url")
       .eq("id", user.id)
       .single();
 
-    if (error || !data) {
-      console.error("Error loading avatar:", error);
-      return;
+    if (data) {
+      setUserProfile(data);
     }
-
-    const username: string = data.username;
-    const initial = username.charAt(0).toUpperCase();
-
-    setProfileAvatar({
-      initial,
-      imageUrl: data.profile_image_url ?? null,
-    });
   };
 
-  const loadKitchens = async () => {
+  const loadNotifications = async () => {
     setLoading(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setLoading(false);
       return;
     }
 
-    // Lae kõik köögid kus kasutaja on liige
     const { data, error } = await supabase
-      .from("kitchen_members")
-      .select("kitchens(id, name)")
-      .eq("user_id", user.id);
+      .from("notifications")
+      .select(`
+        id,
+        title,
+        body,
+        recipe_id,
+        kitchen_id,
+        is_read,
+        created_at,
+        recipes (
+          title,
+          image_url
+        ),
+        kitchens (
+          name,
+          color
+        )
+      `)
+      .eq("user_id", user.id)
+      .eq("type", "recipe_change_request")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error loading kitchens:", error);
+      console.error("Error loading notifications:", error);
     } else if (data) {
-      const kitchenList: Kitchen[] = data
-        .map((item: any, index: number) => ({
-          id: item.kitchens.id,
-          name: item.kitchens.name,
-          unreadCount: 0, // Hiljem saad lisada tegeliku lugemata sõnumite arvu
-          color: KITCHEN_COLORS[index % KITCHEN_COLORS.length],
-        }))
-        .filter((k: any) => k !== null);
-      setKitchens(kitchenList);
+      setNotifications(data as unknown as Notification[]);
     }
 
     setLoading(false);
   };
 
-  const handleKitchenPress = (kitchen: Kitchen) => {
-    console.log("Selected kitchen:", kitchen);
-    // Hiljem saad navigeerida kitchen-specific chat lehele
+  const handleNotificationPress = async (notification: Notification) => {
+    setSelectedNotification(notification);
+    setModalVisible(true);
+
+    // Mark as read
+    if (!notification.is_read) {
+      await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", notification.id);
+
+      // Update local state
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notification.id ? { ...n, is_read: true } : n
+        )
+      );
+    }
+  };
+
+  const handleApprove = () => {
+    // TODO: Navigate to recipe edit
+    setModalVisible(false);
+    // router.push(`/recipe/${selectedNotification?.recipe_id}/edit`);
+  };
+
+  const handleReject = async () => {
+    if (!selectedNotification) return;
+
+    // Delete notification
+    await supabase
+      .from("notifications")
+      .delete()
+      .eq("id", selectedNotification.id);
+
+    // Remove from local state
+    setNotifications((prev) =>
+      prev.filter((n) => n.id !== selectedNotification.id)
+    );
+
+    setModalVisible(false);
   };
 
   if (loading) {
@@ -119,68 +158,107 @@ export default function Notifications() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={kitchens}
+        data={notifications}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Teavitusi pole</Text>
+          </View>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[styles.kitchenItem, { backgroundColor: item.color }]}
-            onPress={() => handleKitchenPress(item)}
+            style={[
+              styles.notificationItem,
+              { backgroundColor: item.kitchens?.color || "#FFFFFF" },
+              !item.is_read && styles.unreadItem,
+            ]}
+            onPress={() => handleNotificationPress(item)}
           >
-            <Text style={styles.kitchenName}>{item.name}</Text>
-            <View style={styles.avatarContainer}>
-              {profileAvatar?.imageUrl ? (
-                <Image
-                  source={{ uri: profileAvatar.imageUrl }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarText}>
-                    {profileAvatar?.initial ?? "?"}
-                  </Text>
-                </View>
-              )}
-              {item.unreadCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{item.unreadCount}</Text>
-                </View>
-              )}
-            </View>
+            <Text style={styles.recipeName}>
+              {item.recipes?.title || "Retsept"}
+            </Text>
+            {userProfile?.profile_image_url && (
+              <Image
+                source={{ uri: userProfile.profile_image_url }}
+                style={styles.userImage}
+              />
+            )}
           </TouchableOpacity>
         )}
       />
 
       <View style={styles.bottomButtons}>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => router.push("/home")}
-        >
-          <Image
-            source={require("@/assets/images/Home.png")}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
+        <HomeButton />
 
         <TouchableOpacity
-          style={styles.iconButton}
+          style={styles.profileButton}
           onPress={() => router.push("/home/user")}
         >
-          {profileAvatar?.imageUrl ? (
+          {userProfile?.profile_image_url ? (
             <Image
-              source={{ uri: profileAvatar.imageUrl }}
-              style={styles.profileIcon}
+              source={{ uri: userProfile.profile_image_url }}
+              style={styles.profileImage}
             />
           ) : (
-            <View style={styles.profileIconPlaceholder}>
-              <Text style={styles.profileIconText}>
-                {profileAvatar?.initial ?? "P"}
+            <View style={styles.placeholderImage}>
+              <Text style={styles.placeholderText}>
+                {userProfile?.username.charAt(0).toUpperCase() || "U"}
               </Text>
             </View>
           )}
-          <View style={styles.notificationDot} />
         </TouchableOpacity>
       </View>
+
+      {/* Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackground}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          />
+
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleApprove}
+            >
+              <Text style={styles.modalButtonText}>Muuda retsepti</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalRejectButton}
+              onPress={handleReject}
+            >
+              <Text style={styles.modalRejectText}>
+                Ei tule välja nende kogustega
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.rejectIcon}
+                onPress={handleReject}
+              >
+                <Text style={styles.iconText}>✗</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.approveIcon}
+                onPress={handleApprove}
+              >
+                <Text style={styles.iconText}>✓</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
