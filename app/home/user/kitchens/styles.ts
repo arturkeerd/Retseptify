@@ -4,6 +4,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8E6E1",
+    paddingBottom: 40, 
   },
   scrollContent: {
     paddingTop: 60,
@@ -62,16 +63,27 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#333",
   },
-  bottomButtons: {
-    flexDirection: "row",
-    gap: 20,
+  bottomContainer: {
     position: "absolute",
-    bottom: 20,
+    bottom: 10,
     left: 0,
     right: 0,
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
+  },
+  leftSide: {
+    flex: 1,
+    alignItems: "flex-start",
+    paddingLeft: 10,
+  },
+  centerSide: {
+    flex: 1,
+    alignItems: "center",
+  },
+  rightSide: {
+    flex: 1,
+    alignItems: "flex-end",
+    paddingRight: 10,
   },
   addButton: {
     width: 100,

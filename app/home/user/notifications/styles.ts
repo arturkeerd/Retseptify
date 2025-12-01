@@ -4,6 +4,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8E6E1",
+    paddingBottom: 40, 
   },
   listContent: {
     paddingTop: 80,
@@ -47,16 +48,27 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
   },
-  bottomButtons: {
-    flexDirection: "row",
-    gap: 20,
+  bottomContainer: {
     position: "absolute",
-    bottom: 20,
+    bottom: 10,
     left: 0,
     right: 0,
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
+  },
+  leftSide: {
+    flex: 1,
+    alignItems: "flex-start",
+    paddingLeft: 10,
+  },
+  centerSide: {
+    flex: 1,
+    alignItems: "center",
+  },
+  rightSide: {
+    flex: 1,
+    alignItems: "flex-end",
+    paddingRight: 10,
   },
   profileButton: {
     width: 100,

@@ -239,10 +239,21 @@ const pickImage = async () => {
           <Text style={styles.buttonText}>Logi välja</Text>
         </TouchableOpacity>
 
-        <View style={styles.bottomButtons}>
-          <HomeButton />
-          <NotificationButton />
+        <View style={styles.bottomContainer}>
+          {/* Vasak pool - tühi või nupp */}
+          <View style={styles.leftSide}>
+            {/* Tühi praegu */}
+          </View>
           
+          {/* Keskel - ALATI HomeButton */}
+          <View style={styles.centerSide}>
+            <HomeButton />
+          </View>
+          
+          {/* Parem pool - NotificationButton */}
+          <View style={styles.rightSide}>
+            <NotificationButton />
+          </View>
         </View>
       </View>
 

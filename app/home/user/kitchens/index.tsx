@@ -168,36 +168,45 @@ export default function Kitchens() {
         </View>
       </ScrollView>
 
-      <View style={styles.bottomButtons}>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => {
-            console.log("Add kitchen");
-          }}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
-
-        <HomeButton />
-
-        <TouchableOpacity
-          style={styles.profileButtonBottom}
-          onPress={() => router.push("/home/user")}
-        >
-          {profile?.profile_image_url ? (
-            <Image
-              source={{ uri: profile.profile_image_url }}
-              style={styles.profileImageSmall}
-            />
-          ) : (
-            <View style={styles.placeholderImageSmall}>
-              <Text style={styles.placeholderTextSmall}>
-                {profile?.username.charAt(0).toUpperCase() || "U"}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
+      <View style={styles.bottomContainer}>
+          {/* Vasak pool - Add button */}
+          <View style={styles.leftSide}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => {
+                console.log("Add kitchen");
+              }}
+            >
+              <Text style={styles.addButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Keskel - HomeButton */}
+          <View style={styles.centerSide}>
+            <HomeButton />
+          </View>
+          
+          {/* Parem pool - ProfileButton */}
+          <View style={styles.rightSide}>
+            <TouchableOpacity
+              style={styles.profileButtonBottom}
+              onPress={() => router.push("/home/user")}
+            >
+              {profile?.profile_image_url ? (
+                <Image
+                  source={{ uri: profile.profile_image_url }}
+                  style={styles.profileImageSmall}
+                />
+              ) : (
+                <View style={styles.placeholderImageSmall}>
+                  <Text style={styles.placeholderTextSmall}>
+                    {profile?.username.charAt(0).toUpperCase() || "U"}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
 
       {selectedKitchen && (
         <KitchenColorPicker

@@ -188,27 +188,38 @@ export default function Notifications() {
         )}
       />
 
-      <View style={styles.bottomButtons}>
-        <HomeButton />
-
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => router.push("/home/user")}
-        >
-          {userProfile?.profile_image_url ? (
-            <Image
-              source={{ uri: userProfile.profile_image_url }}
-              style={styles.profileImage}
-            />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>
-                {userProfile?.username.charAt(0).toUpperCase() || "U"}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
+      <View style={styles.bottomContainer}>
+          {/* Vasak pool - tühi */}
+          <View style={styles.leftSide}>
+            {/* Tühi */}
+          </View>
+          
+          {/* Keskel - HomeButton */}
+          <View style={styles.centerSide}>
+            <HomeButton />
+          </View>
+          
+          {/* Parem pool - ProfileButton */}
+          <View style={styles.rightSide}>
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => router.push("/home/user")}
+            >
+              {userProfile?.profile_image_url ? (
+                <Image
+                  source={{ uri: userProfile.profile_image_url }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <View style={styles.placeholderImage}>
+                  <Text style={styles.placeholderText}>
+                    {userProfile?.username.charAt(0).toUpperCase() || "U"}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
 
       <NotificationActionModal
         visible={modalVisible}

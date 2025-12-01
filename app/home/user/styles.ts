@@ -123,12 +123,27 @@ usernameText: {
     color: "#333",
     fontWeight: "400",
   },
-  bottomButtons: {
-    flexDirection: "row",
-    gap: 20,
+  bottomContainer: {
     position: "absolute",
     bottom: 10,
-    right: 10,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  leftSide: {
+    flex: 1,
+    alignItems: "flex-start",
+    paddingLeft: 10,
+  },
+  centerSide: {
+    flex: 1,
+    alignItems: "center",
+  },
+  rightSide: {
+    flex: 1,
+    alignItems: "flex-end",
+    paddingRight: 10,
   },
   iconButton: {
     width: 100,
