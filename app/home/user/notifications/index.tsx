@@ -1,4 +1,5 @@
 import HomeButton from "@/components/HomeButton";
+import NotificationActionModal from "@/components/NotificationActionModal";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -6,10 +7,9 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  Modal,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import styles from "./styles";
 
@@ -210,55 +210,12 @@ export default function Notifications() {
         </TouchableOpacity>
       </View>
 
-      {/* Modal */}
-      <Modal
+      <NotificationActionModal
         visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity
-            style={styles.modalBackground}
-            activeOpacity={1}
-            onPress={() => setModalVisible(false)}
-          />
-
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={handleApprove}
-            >
-              <Text style={styles.modalButtonText}>Muuda retsepti</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.modalRejectButton}
-              onPress={handleReject}
-            >
-              <Text style={styles.modalRejectText}>
-                Ei tule välja nende kogustega
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.rejectIcon}
-                onPress={handleReject}
-              >
-                <Text style={styles.iconText}>✗</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.approveIcon}
-                onPress={handleApprove}
-              >
-                <Text style={styles.iconText}>✓</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
     </View>
   );
 }
