@@ -158,7 +158,7 @@ const pickImage = async () => {
 
 
   const handleManageKitchens = () => {
-    router.push("/home/user/kitchens");
+    router.push("/home/kitchens");
   };
 
   const handleSignOut = async () => {

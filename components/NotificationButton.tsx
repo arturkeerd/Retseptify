@@ -33,7 +33,7 @@ export default function NotificationButton() {
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.iconButton}
-        onPress={() => router.push("/home/user/notifications")}
+        onPress={() => router.push("/home/notifications")}
       >
         <Image 
           source={require("@/assets/images/chat_bubble.png")} 
