@@ -1,22 +1,23 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+// app/home/index.tsx
+import AddIcon from "@/assets/images/add.png";
+import SearchIcon from "@/assets/images/luup.png";
+import { FilterRecipes } from "@/components/FilterRecipes";
+import RecipeListItem from "@/components/RecipeListItem";
+import { SortMode, SortRecipes } from "@/components/SortRecipes";
+import { supabase } from "@/lib/supabase";
+import { router } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  View,
-  Text,
   FlatList,
-  TextInput,
-  TouchableOpacity,
   Image,
   KeyboardAvoidingView,
   Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { router } from "expo-router";
-import { supabase } from "@/lib/supabase";
 import styles from "./styles";
-import RecipeListItem from "@/components/RecipeListItem";
-import { FilterRecipes } from "@/components/FilterRecipes";
-import { SortRecipes, SortMode } from "@/components/SortRecipes";
-import SearchIcon from "@/assets/images/luup.png";
-import AddIcon from "@/assets/images/add.png";
 
 type DbRecipe = {
   id: string;
@@ -418,36 +419,35 @@ export default function Home() {
           </TouchableOpacity>
 
           <View style={styles.footerRight}>
-  <View style={styles.profileWrapper}>
-    {/* Profiilipilt */}
-    <TouchableOpacity
-      style={styles.circleButton}
-      activeOpacity={0.8}
-      onPress={() => router.push("/home/user")}
-    >
-      {profileAvatar?.imageUrl ? (
-        <Image
-          source={{ uri: profileAvatar.imageUrl }}
-          style={{ width: "100%", height: "100%", borderRadius: 999 }}
-        />
-      ) : (
-        <Text style={styles.circleButtonText}>
-          {profileAvatar?.initial ?? "P"}
-        </Text>
-      )}
-    </TouchableOpacity>
+            <View style={styles.profileWrapper}>
+              {/* Profiilipilt */}
+              <TouchableOpacity
+                style={styles.circleButton}
+                activeOpacity={0.8}
+                onPress={() => router.push("/home/user")}
+              >
+                {profileAvatar?.imageUrl ? (
+                  <Image
+                    source={{ uri: profileAvatar.imageUrl }}
+                    style={{ width: "100%", height: "100%", borderRadius: 999 }}
+                  />
+                ) : (
+                  <Text style={styles.circleButtonText}>
+                    {profileAvatar?.initial ?? "P"}
+                  </Text>
+                )}
+              </TouchableOpacity>
 
-    {/* + nupp profiili peal */}
-    <TouchableOpacity
-      style={styles.addRecipeButton}
-      activeOpacity={0.9}
-      onPress={() => console.log("Add recipe pressed")}
-    >
-      <Image source={AddIcon} style={styles.addIconImage} />
-    </TouchableOpacity>
-  </View>
-</View>
-
+              {/* + nupp profiili peal */}
+              <TouchableOpacity
+                style={styles.addRecipeButton}
+                activeOpacity={0.9}
+                onPress={() => console.log("Add recipe pressed")}
+              >
+                <Image source={AddIcon} style={styles.addIconImage} />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         <FilterRecipes
