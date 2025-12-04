@@ -1,6 +1,7 @@
-import BackgroundColorPicker from "@/components/BackgroundColorPicker";
 import ChangeNameModal from "@/components/ChangeNameModal";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
+import ColorPickerModal from "@/components/ColorPickerModal";
+import { APP_COLORS } from "@/components/colors";
 import { supabase } from "@/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -257,11 +258,12 @@ const pickImage = async () => {
         </View>
       </View>
 
-      <BackgroundColorPicker
+       <ColorPickerModal
         visible={colorPickerVisible}
         onClose={() => setColorPickerVisible(false)}
         onSelectColor={setBackgroundColor}
         currentColor={backgroundColor}
+        colors={APP_COLORS}
       />
 
       <ChangeNameModal

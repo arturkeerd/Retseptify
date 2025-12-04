@@ -1,14 +1,16 @@
+import ColorPickerModal from "@/components/ColorPickerModal";
+import { APP_COLORS } from "@/components/colors";
 import { supabase } from "@/lib/supabase";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type CreateKitchenModalProps = {
@@ -23,8 +25,10 @@ export default function CreateKitchenModal({
   onKitchenCreated,
 }: CreateKitchenModalProps) {
   const [kitchenName, setKitchenName] = useState("");
+  const [selectedColor, setSelectedColor] = useState("#FFFFFF");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [colorPickerVisible, setColorPickerVisible] = useState(false);
 
   const handleCreate = async () => {
     setErrorMessage("");
@@ -44,14 +48,14 @@ export default function CreateKitchenModal({
         return;
       }
 
-      // Create kitchen
+      // Create kitchen with selected color
       const { data: kitchen, error: kitchenError } = await supabase
         .from("kitchens")
         .insert({
           name: kitchenName.trim(),
           type: "shared",
           owner_user_id: user.id,
-          color: "#FFFFFF",
+          color: selectedColor,
         })
         .select()
         .single();
@@ -71,6 +75,7 @@ export default function CreateKitchenModal({
 
       Alert.alert("Õnnestus!", "Köök edukalt loodud!");
       setKitchenName("");
+      setSelectedColor("#FFFFFF");
       onKitchenCreated();
       onClose();
     } catch (error: any) {
@@ -111,12 +116,13 @@ export default function CreateKitchenModal({
             editable={!loading}
           />
 
-          <TextInput
-            placeholder="Taust"
-            placeholderTextColor="#999"
-            style={styles.input}
-            editable={false}
-          />
+          <TouchableOpacity
+            style={[styles.input, styles.colorInput, { backgroundColor: selectedColor }]}
+            onPress={() => setColorPickerVisible(true)}
+            disabled={loading}
+          >
+            <Text style={styles.colorInputText}>Taust</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.saveButton, loading && styles.saveButtonDisabled]}
@@ -132,6 +138,16 @@ export default function CreateKitchenModal({
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Color Picker Modal */}
+      <ColorPickerModal
+        visible={colorPickerVisible}
+        onClose={() => setColorPickerVisible(false)}
+        onSelectColor={setSelectedColor}
+        currentColor={selectedColor}
+        colors={APP_COLORS}
+        title="Vali köögi värv"
+      />
     </Modal>
   );
 }
@@ -187,6 +203,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
     color: "#333",
+  },
+  colorInput: {
+    justifyContent: "center",
+  },
+  colorInputText: {
+    fontSize: 16,
+    color: "#999",
   },
   saveButton: {
     width: "100%",

@@ -1,4 +1,6 @@
 import AddKitchenButton from "@/components/AddKitchenButton";
+import ColorPickerModal from "@/components/ColorPickerModal";
+import { APP_COLORS } from "@/components/colors";
 import CreateKitchenModal from "@/components/CreateKitchenModal";
 import HomeButton from "@/components/HomeButton";
 import ProfileButton from "@/components/ProfileButton";
@@ -7,6 +9,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -26,6 +29,11 @@ export default function Kitchens() {
   const [kitchens, setKitchens] = useState<Kitchen[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  
+  // Color picker state
+  const [colorModalVisible, setColorModalVisible] = useState(false);
+  const [editingKitchen, setEditingKitchen] = useState<Kitchen | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadKitchens();
@@ -72,8 +80,34 @@ export default function Kitchens() {
   };
 
   const handleColorEdit = (kitchen: Kitchen) => {
-    // TODO: Open color picker modal
-    console.log("Edit color for:", kitchen.name);
+    setEditingKitchen(kitchen);
+    setColorModalVisible(true);
+  };
+
+  const handleColorSelect = async (color: string) => {
+    if (!editingKitchen) return;
+
+    setSaving(true);
+
+    const { error } = await supabase
+      .from("kitchens")
+      .update({ color: color })
+      .eq("id", editingKitchen.id);
+
+    if (error) {
+      console.error("Error updating kitchen color:", error);
+      Alert.alert("Viga", "Värvi uuendamine ebaõnnestus");
+    } else {
+      // Update local state
+      setKitchens((prev) =>
+        prev.map((k) =>
+          k.id === editingKitchen.id ? { ...k, color: color } : k
+        )
+      );
+      setColorModalVisible(false);
+    }
+
+    setSaving(false);
   };
 
   if (loading) {
@@ -141,6 +175,17 @@ export default function Kitchens() {
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}
         onKitchenCreated={loadKitchens}
+      />
+
+      <ColorPickerModal
+        visible={colorModalVisible}
+        onClose={() => setColorModalVisible(false)}
+        onSelectColor={handleColorSelect}
+        currentColor={editingKitchen?.color || "#FFFFFF"}
+        colors={APP_COLORS}
+        title={editingKitchen?.name || ""}
+        subtitle="Vali värv"
+        showLoading={saving}
       />
     </View>
   );

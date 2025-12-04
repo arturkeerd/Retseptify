@@ -1,7 +1,6 @@
-import { supabase } from "@/lib/supabase";
-import React, { useState } from "react";
+import React from "react";
 import {
-    Alert,
+    ActivityIndicator,
     Modal,
     StyleSheet,
     Text,
@@ -9,63 +8,27 @@ import {
     View,
 } from "react-native";
 
-type KitchenColorPickerProps = {
+type ColorPickerModalProps = {
   visible: boolean;
   onClose: () => void;
-  kitchenId: string;
-  kitchenName: string;
+  onSelectColor: (color: string) => void;
   currentColor: string;
-  onColorChanged: (newColor: string) => void;
+  colors: string[];
+  title?: string;
+  subtitle?: string;
+  showLoading?: boolean;
 };
 
-// Lihtsalt värvid
-const COLORS = [
-  "#FFFFFF", // white
-  "#FFCDD2", // pink
-  "#E1BEE7", // purple
-  "#BBDEFB", // light blue
-  "#EF5350", // red
-  "#FFEB3B", // yellow
-  "#FFA726", // orange
-  
-  "#424242", // dark gray
-  "#4CAF50", // green
-  "#2196F3", // blue
-  "#F5F5F5", // light gray
-  "#C8B8A0", // beige
-  "#8D6E63", // brown
-  "#000000", // black
-];
-
-export default function KitchenColorPicker({
+export default function ColorPickerModal({
   visible,
   onClose,
-  kitchenId,
-  kitchenName,
+  onSelectColor,
   currentColor,
-  onColorChanged,
-}: KitchenColorPickerProps) {
-  const [saving, setSaving] = useState(false);
-
-  const handleColorSelect = async (color: string) => {
-    setSaving(true);
-
-    const { error } = await supabase
-      .from("kitchens")
-      .update({ color: color })
-      .eq("id", kitchenId);
-
-    if (error) {
-      console.error("Error updating kitchen color:", error);
-      Alert.alert("Viga", "Värvi uuendamine ebaõnnestus");
-    } else {
-      onColorChanged(color);
-      onClose();
-    }
-
-    setSaving(false);
-  };
-
+  colors,
+  title = "Vali värv",
+  subtitle,
+  showLoading = false,
+}: ColorPickerModalProps) {
   return (
     <Modal
       visible={visible}
@@ -79,29 +42,35 @@ export default function KitchenColorPicker({
         onPress={onClose}
       >
         <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
-          <Text style={styles.title}>{kitchenName}</Text>
-          <Text style={styles.subtitle}>Vali värv</Text>
+          <Text style={styles.title}>{title}</Text>
+          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
 
           <View style={styles.colorGrid}>
-            {COLORS.map((color) => (
+            {colors.map((color) => (
               <TouchableOpacity
                 key={color}
                 style={[
                   styles.colorBox,
                   { backgroundColor: color },
                   currentColor === color && styles.selectedColor,
-                  color === "#FFFFFF" && styles.whiteBox,
                 ]}
-                onPress={() => handleColorSelect(color)}
-                disabled={saving}
+                onPress={() => {
+                  onSelectColor(color);
+                  onClose(); 
+                }}
+                disabled={showLoading}
               />
             ))}
           </View>
 
+          {showLoading && (
+            <ActivityIndicator size="small" color="#5D4037" style={styles.loader} />
+          )}
+
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
-            disabled={saving}
+            disabled={showLoading}
           >
             <Text style={styles.closeButtonText}>Sulge</Text>
           </TouchableOpacity>
@@ -141,7 +110,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   colorGrid: {
     flexDirection: "row",
@@ -151,18 +120,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   colorBox: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     borderRadius: 8,
     borderWidth: 2,
     borderColor: "transparent",
   },
-  whiteBox: {
-    borderColor: "#E0E0E0",
-  },
   selectedColor: {
     borderColor: "#5D4037",
     borderWidth: 4,
+  },
+  loader: {
+    marginBottom: 16,
   },
   closeButton: {
     backgroundColor: "#C8B8A0",
