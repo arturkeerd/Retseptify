@@ -1,11 +1,10 @@
-// app/home/index.tsx
 import AddIcon from "@/assets/images/add.png";
 import SearchIcon from "@/assets/images/luup.png";
 import { FilterRecipes } from "@/components/FilterRecipes";
+import ProfileButton from "@/components/ProfileButton";
 import RecipeListItem from "@/components/RecipeListItem";
 import { SortMode, SortRecipes } from "@/components/SortRecipes";
 import { supabase } from "@/lib/supabase";
-import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
@@ -26,16 +25,18 @@ type DbRecipe = {
   image_url: string | null;
   created_at: string | null;
 
-  kitchens:
+  kitchen:
     | {
         id: string;
         name: string;
         type: string;
+        color?: string | null;
       }
     | {
         id: string;
         name: string;
         type: string;
+        color?: string | null;
       }[]
     | null;
 
@@ -78,11 +79,6 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const searchInputRef = useRef<TextInput | null>(null);
 
-  const [profileAvatar, setProfileAvatar] = useState<{
-    initial: string;
-    imageUrl: string | null;
-  } | null>(null);
-
   // overlay state
   const [filterVisible, setFilterVisible] = useState(false);
   const [sortVisible, setSortVisible] = useState(false);
@@ -104,21 +100,26 @@ export default function Home() {
         .from("recipes")
         .select(
           `
-          id,
-          title,
-          description,
-          image_url,
-          created_at,
-          kitchens ( id, name, type ),
-          recipe_categories (
-            categories ( id, name )
-          ),
-          recipe_ingredients (
-            ingredient,
-            quantity,
-            unit
-          )
-        `
+    id,
+    title,
+    description,
+    image_url,
+    created_at,
+    kitchen: kitchens!recipes_kitchen_id_fkey (
+      id,
+      name,
+      type,
+      color
+    ),
+    recipe_categories (
+      categories ( id, name )
+    ),
+    recipe_ingredients (
+      ingredient,
+      quantity,
+      unit
+    )
+  `
         )
         .order("created_at", { ascending: false });
 
@@ -132,9 +133,16 @@ export default function Home() {
       const mapped: Recipe[] = (data ?? []).map((raw) => {
         const r = raw as DbRecipe;
 
-        let kitchen: { id: string; name: string; type: string } | null = null;
+        // normalizeeri kitchen: võta kas esimene massiivist või üksik objekt
+        let kitchen: {
+          id: string;
+          name: string;
+          type: string;
+          color?: string | null;
+        } | null = null;
 
-        const kField = r.kitchens;
+        const kField = r.kitchen;
+
         if (Array.isArray(kField)) {
           kitchen = kField[0] ?? null;
         } else if (kField && typeof kField === "object") {
@@ -151,7 +159,6 @@ export default function Home() {
             return [cat.name];
           }) ?? [];
 
-        // --- Koostisosad ---
         const ingredients =
           r.recipe_ingredients?.map((ri) => ({
             name: ri.ingredient,
@@ -187,35 +194,6 @@ export default function Home() {
     };
 
     load();
-  }, []);
-
-  useEffect(() => {
-    const loadAvatar = async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      const user = auth.user;
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("users")
-        .select("username, profile_image_url")
-        .eq("id", user.id)
-        .single();
-
-      if (error || !data) {
-        console.error("Error loading avatar:", error);
-        return;
-      }
-
-      const username: string = data.username;
-      const initial = username.charAt(0).toUpperCase();
-
-      setProfileAvatar({
-        initial,
-        imageUrl: data.profile_image_url ?? null,
-      });
-    };
-
-    loadAvatar();
   }, []);
 
   // kõik köögid, mis retseptide seast tulevad
@@ -420,24 +398,8 @@ export default function Home() {
 
           <View style={styles.footerRight}>
             <View style={styles.profileWrapper}>
-              {/* Profiilipilt */}
-              <TouchableOpacity
-                style={styles.circleButton}
-                activeOpacity={0.8}
-                onPress={() => router.push("/home/user")}
-              >
-                {profileAvatar?.imageUrl ? (
-                  <Image
-                    source={{ uri: profileAvatar.imageUrl }}
-                    style={{ width: "100%", height: "100%", borderRadius: 999 }}
-                  />
-                ) : (
-                  <Text style={styles.circleButtonText}>
-                    {profileAvatar?.initial ?? "P"}
-                  </Text>
-                )}
-              </TouchableOpacity>
-
+              {/* Profiil */}
+              <ProfileButton />
               {/* + nupp profiili peal */}
               <TouchableOpacity
                 style={styles.addRecipeButton}
