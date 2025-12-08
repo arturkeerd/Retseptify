@@ -1,3 +1,4 @@
+// app/home/detailview/styles.ts
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
@@ -31,9 +32,6 @@ const styles = StyleSheet.create({
   headerRow: {
     marginBottom: 8,
   },
-  titleBlock: {
-    marginBottom: 4,
-  },
   title: {
     fontSize: 24,
     fontWeight: "700",
@@ -52,13 +50,13 @@ const styles = StyleSheet.create({
   cardsScrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 16,
   },
 
   card: {
     borderRadius: 16,
     backgroundColor: "#FFFFFF",
-    padding: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -78,13 +76,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
-  showAll: {
-    fontSize: 14,
-    fontWeight: "500",
-    textDecorationLine: "underline",
+
+  // Expand/Collapse ikoon
+  expandButton: {
+    padding: 0,
+  },
+  expandIcon: {
+    width: 50,
+    height: 50,
+    resizeMode: "contain",
   },
 
-  // Tooraine header – Valmistamise kogus + controls + Kuva kõik
+  // Tooraine header – Valmistamise kogus + controls + expand ikoon
   servingsHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -185,6 +188,73 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+
+  // Märksõnad / Köögid nupud
+  tagsKitchensRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 4,
+  },
+  pillButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  pillButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
+  // Ühiku modal
+  unitModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  unitModalCard: {
+    width: "100%",
+    maxWidth: 320,
+    backgroundColor: "#FFF",
+  },
+  unitModalTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  unitOptionRow: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  unitOptionText: {
+    fontSize: 14,
+  },
+  unitOptionDivider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginVertical: 4,
+  },
+  unitModalCancel: {
+    marginTop: 12,
+    alignSelf: "flex-end",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  unitModalCancelText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
 
   // Alumine rida – Edit/Chat + Home + Profiil

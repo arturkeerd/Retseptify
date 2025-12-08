@@ -66,6 +66,7 @@ type Recipe = {
   description: string | null;
   imageUrl: string | null;
   kitchenName: string | null;
+  kitchenColor: string | null;
   tags: string[];
   ingredients: RecipeIngredient[];
   createdAt: string | null;
@@ -134,12 +135,14 @@ export default function Home() {
         const r = raw as DbRecipe;
 
         // normalizeeri kitchen: võta kas esimene massiivist või üksik objekt
-        let kitchen: {
-          id: string;
-          name: string;
-          type: string;
-          color?: string | null;
-        } | null = null;
+        let kitchen:
+          | {
+              id: string;
+              name: string;
+              type: string;
+              color?: string | null;
+            }
+          | null = null;
 
         const kField = r.kitchen;
 
@@ -172,6 +175,7 @@ export default function Home() {
           description: r.description,
           imageUrl: r.image_url && r.image_url !== "NULL" ? r.image_url : null,
           kitchenName: kitchen?.name ?? null,
+          kitchenColor: kitchen?.color ?? null,
           tags,
           ingredients,
           createdAt: r.created_at,

@@ -3,22 +3,25 @@ import { supabase } from "@/lib/supabase";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
+import CollapseIcon from "@/assets/images/Collapse.png";
+import ExpandIcon from "@/assets/images/Expand.png";
 import MinusIcon from "@/assets/images/minus.png";
 import PlusIcon from "@/assets/images/plus.png";
 
 import EditButton from "@/components/EditButton";
 import HomeButton from "@/components/HomeButton";
 import KitchensModal, {
-    Kitchen as KitchenType,
+  Kitchen as KitchenType,
 } from "@/components/KitchensModal";
 import NotificationButton from "@/components/NotificationButton";
 import ProfileButton from "@/components/ProfileButton";
@@ -79,25 +82,62 @@ type Recipe = {
   tags: string[];
 };
 
+type ComputedIngredient = Ingredient & {
+  displayQuantity: string;
+  displayUnit: string;
+};
+
 // ---- Ühikute helperid ----
 
-const WEIGHT_UNITS = ["kg", "g"] as const;
-const SPOON_UNITS = ["tl", "sp"] as const;
+// mass: gramm(g), kilogramm(kg), oz, lb
+const WEIGHT_UNITS = ["g", "kg", "oz", "lb"] as const;
 
+// maht: milliliiter(ml), liiter(l), dl, fl oz, quart(qt), gallon(gal), cup
+const VOLUME_UNITS = ["ml", "l", "dl", "fl oz", "qt", "gal", "cup"] as const;
+
+// lusikad – ainult tl <-> spl
+const SPOON_UNITS = ["tl", "spl"] as const;
+
+// baas: mass → gramm; maht → ml; lusikad suhteliste teguritega
 const UNIT_TO_BASE: Record<string, number> = {
+  // mass (g base)
   g: 1,
   kg: 1000,
+  oz: 28.349523125,
+  lb: 453.59237,
+
+  // maht (ml base)
+  ml: 1,
+  l: 1000,
+  dl: 100,
+  cup: 240,
+  "fl oz": 29.5735,
+  qt: 946.353,
+  gal: 3785.41,
+
+  // lusikad
   tl: 1,
-  sp: 3,
+  spl: 3,
 };
 
 function getUnitOptions(baseUnit: string | null): string[] {
   if (!baseUnit) return [];
   const u = baseUnit.toLowerCase();
 
-  if (WEIGHT_UNITS.includes(u as any)) return ["kg", "g"];
-  if (SPOON_UNITS.includes(u as any)) return ["tl", "sp"];
+  if (WEIGHT_UNITS.includes(u as any)) {
+    return Array.from(WEIGHT_UNITS);
+  }
+
+  if (VOLUME_UNITS.includes(u as any)) {
+    return Array.from(VOLUME_UNITS);
+  }
+
+  if (SPOON_UNITS.includes(u as any)) {
+    return ["tl", "spl"];
+  }
+
   if (u === "tk") return ["tk"];
+
   return [baseUnit];
 }
 
@@ -107,7 +147,11 @@ function convertQuantity(
   targetUnit: string | null,
   servings: number
 ): number | null {
-  if (!baseQty || !baseUnit || !targetUnit) return baseQty;
+  if (baseQty == null) return null;
+
+  const scaled = baseQty * servings;
+
+  if (!baseUnit || !targetUnit) return scaled;
 
   const from = baseUnit.toLowerCase();
   const to = targetUnit.toLowerCase();
@@ -115,13 +159,16 @@ function convertQuantity(
   const isWeight =
     WEIGHT_UNITS.includes(from as any) &&
     WEIGHT_UNITS.includes(to as any);
+
+  const isVolume =
+    VOLUME_UNITS.includes(from as any) &&
+    VOLUME_UNITS.includes(to as any);
+
   const isSpoon =
     SPOON_UNITS.includes(from as any) &&
     SPOON_UNITS.includes(to as any);
 
-  const scaled = baseQty * servings;
-
-  if (!isWeight && !isSpoon) return scaled;
+  if (!isWeight && !isVolume && !isSpoon) return scaled;
 
   const fromFactor = UNIT_TO_BASE[from];
   const toFactor = UNIT_TO_BASE[to];
@@ -134,9 +181,8 @@ function convertQuantity(
 
 function formatQuantity(q: number | null): string {
   if (q == null || Number.isNaN(q)) return "";
-  const roundedInt = Math.round(q);
-  if (Math.abs(roundedInt - q) < 1e-6) return String(roundedInt);
-  return q.toFixed(2).replace(/\.00$/, "");
+  const rounded = Math.round(q * 1000) / 1000;
+  return rounded.toString();
 }
 
 export default function DetailView() {
@@ -153,13 +199,28 @@ export default function DetailView() {
     {}
   );
 
-  const [isIngredientsExpanded, setIsIngredientsExpanded] = useState(false);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isIngredientsExpanded, setIsIngredientsExpanded] =
+    useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] =
+    useState(false);
 
   const [isChef, setIsChef] = useState(false);
 
   const [tagsModalVisible, setTagsModalVisible] = useState(false);
-  const [kitchensModalVisible, setKitchensModalVisible] = useState(false);
+  const [kitchensModalVisible, setKitchensModalVisible] =
+    useState(false);
+
+  // ühiku dropdowni state
+  const [unitPickerIngredient, setUnitPickerIngredient] =
+    useState<Ingredient | null>(null);
+
+  const unitPickerOptions = useMemo(
+    () =>
+      unitPickerIngredient
+        ? getUnitOptions(unitPickerIngredient.baseUnit)
+        : [],
+    [unitPickerIngredient]
+  );
 
   // --- Lae retsept ---
   useEffect(() => {
@@ -290,7 +351,7 @@ export default function DetailView() {
   const primaryKitchen = recipe?.kitchens[0] ?? null;
   const bgColor = primaryKitchen?.color ?? "#FFE9A6";
 
-  const computedIngredients = useMemo(() => {
+  const computedIngredients = useMemo<ComputedIngredient[]>(() => {
     if (!recipe) return [];
 
     return recipe.ingredients.map((ing) => {
@@ -332,21 +393,17 @@ export default function DetailView() {
     }
   };
 
-  const handleToggleUnit = (ingredient: Ingredient) => {
-    const baseUnit = ingredient.baseUnit;
-    if (!baseUnit) return;
+  const handleOpenUnitPicker = (ingredient: Ingredient) => {
+    setUnitPickerIngredient(ingredient);
+  };
 
-    const options = getUnitOptions(baseUnit);
-    if (options.length <= 1) return;
-
-    const current = unitOverrides[ingredient.key] ?? baseUnit;
-    const idx = options.indexOf(current);
-    const next = options[(idx + 1 + options.length) % options.length];
-
+  const handleSelectUnit = (unit: string) => {
+    if (!unitPickerIngredient) return;
     setUnitOverrides((prev) => ({
       ...prev,
-      [ingredient.key]: next,
+      [unitPickerIngredient.key]: unit,
     }));
+    setUnitPickerIngredient(null);
   };
 
   const kitchenButtonLabel =
@@ -387,7 +444,7 @@ export default function DetailView() {
             style={styles.unitButton}
             activeOpacity={0.8}
             onPress={() =>
-              handleToggleUnit({
+              handleOpenUnitPicker({
                 key: ing.key,
                 name: ing.name,
                 baseQuantity: ing.baseQuantity,
@@ -438,24 +495,23 @@ export default function DetailView() {
               </View>
             </View>
 
-            <Text
-              style={styles.showAll}
+            <TouchableOpacity
+              style={styles.expandButton}
               onPress={() =>
                 setIsIngredientsExpanded((prev) => !prev)
               }
             >
-              {isIngredientsExpanded ? "Peida" : "Kuva kõik"}
-            </Text>
+              <Image
+                source={isIngredientsExpanded ? CollapseIcon : ExpandIcon}
+                style={styles.expandIcon}
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Koostisosad */}
           {isIngredientsExpanded ? (
-            // LAHTI: täis list, ilma maxHeightita ja ilma sisemise scrollita
-            <View style={styles.ingredientsList}>
-              {ingredientRows}
-            </View>
+            <View style={styles.ingredientsList}>{ingredientRows}</View>
           ) : (
-            // KINNI: maxHeight + alati sisemine scroll
             <View style={styles.ingredientsListCollapsed}>
               <ScrollView
                 style={styles.innerScroll}
@@ -471,25 +527,27 @@ export default function DetailView() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Kirjeldus</Text>
-            <Text
-              style={styles.showAll}
+
+            <TouchableOpacity
+              style={styles.expandButton}
               onPress={() =>
                 setIsDescriptionExpanded((prev) => !prev)
               }
             >
-              {isDescriptionExpanded ? "Peida" : "Kuva kõik"}
-            </Text>
+              <Image
+                source={isDescriptionExpanded ? CollapseIcon : ExpandIcon}
+                style={styles.expandIcon}
+              />
+            </TouchableOpacity>
           </View>
 
           {isDescriptionExpanded ? (
-            // LAHTI: kogu tekst
             <View style={styles.descriptionBox}>
               <Text style={styles.descriptionText}>
                 {recipe.description || "Kirjeldus puudub."}
               </Text>
             </View>
           ) : (
-            // KINNI: maxHeight + alati sisemine scroll
             <View style={styles.descriptionCollapsed}>
               <ScrollView
                 style={styles.innerScroll}
@@ -504,54 +562,19 @@ export default function DetailView() {
         </View>
 
         {/* Märksõnad & Köögid nupud */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            gap: 12,
-            marginTop: 4,
-          }}
-        >
+        <View style={styles.tagsKitchensRow}>
           <TouchableOpacity
-            style={{
-              flex: 1,
-              paddingVertical: 10,
-              borderRadius: 999,
-              backgroundColor: "#FFFFFF",
-              alignItems: "center",
-              justifyContent: "center",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.15,
-              shadowRadius: 3,
-              elevation: 3,
-            }}
+            style={styles.pillButton}
             onPress={() => setTagsModalVisible(true)}
           >
-            <Text style={{ fontSize: 14, fontWeight: "500" }}>
-              Märksõnad
-            </Text>
+            <Text style={styles.pillButtonText}>Märksõnad</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={{
-              flex: 1,
-              paddingVertical: 10,
-              borderRadius: 999,
-              backgroundColor: "#FFFFFF",
-              alignItems: "center",
-              justifyContent: "center",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.15,
-              shadowRadius: 3,
-              elevation: 3,
-            }}
+            style={styles.pillButton}
             onPress={() => setKitchensModalVisible(true)}
           >
-            <Text style={{ fontSize: 14, fontWeight: "500" }}>
-              {kitchenButtonLabel}
-            </Text>
+            <Text style={styles.pillButtonText}>{kitchenButtonLabel}</Text>
           </TouchableOpacity>
         </View>
       </>
@@ -575,12 +598,6 @@ export default function DetailView() {
             </View>
           )}
         </View>
-
-        <View style={styles.headerRow}>
-          <View style={styles.titleBlock}>
-            <Text style={styles.title}>{recipe.title}</Text>
-          </View>
-        </View>
       </View>
 
       {/* Kaardid + nupud: väline scroll ainult siis, kui vähemalt üks kaart on lahti */}
@@ -594,9 +611,7 @@ export default function DetailView() {
           <View style={{ height: 140 }} />
         </ScrollView>
       ) : (
-        <View style={styles.cardsScrollContent}>
-          {renderCardsAndButtons()}
-        </View>
+        <View style={styles.cardsScrollContent}>{renderCardsAndButtons()}</View>
       )}
 
       {/* Märksõnade modaal (view) */}
@@ -614,6 +629,52 @@ export default function DetailView() {
         kitchens={recipe.kitchens}
         onClose={() => setKitchensModalVisible(false)}
       />
+
+      {/* Ühiku “dropdown” modaal */}
+      <Modal
+        visible={!!unitPickerIngredient}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setUnitPickerIngredient(null)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setUnitPickerIngredient(null)}
+          style={styles.unitModalOverlay}
+        >
+          {/* Sisukaart – peatab klikid, et ei closiks kohe */}
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => {}}
+            style={styles.unitModalCard}
+          >
+            <Text style={styles.unitModalTitle}>Vali ühik</Text>
+
+            {unitPickerOptions.map((u, idx) => (
+              <View key={u}>
+                <TouchableOpacity
+                  style={styles.unitOptionRow}
+                  onPress={() => handleSelectUnit(u)}
+                >
+                  <Text style={styles.unitOptionText}>{u}</Text>
+                </TouchableOpacity>
+
+                {/* eraldusjoon variantide vahel */}
+                {idx < unitPickerOptions.length - 1 && (
+                  <View style={styles.unitOptionDivider} />
+                )}
+              </View>
+            ))}
+
+            <TouchableOpacity
+              style={styles.unitModalCancel}
+              onPress={() => setUnitPickerIngredient(null)}
+            >
+              <Text style={styles.unitModalCancelText}>Loobu</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Alumine rida: Edit / Chat + Home + Profiil */}
       <View style={styles.bottomBar}>
