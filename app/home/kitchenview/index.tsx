@@ -139,8 +139,7 @@ export default function KitchenView() {
       const blob = await response.blob();
       const fileExt = uri.split(".").pop();
       const fileName = `${kitchen.id}-${Date.now()}.${fileExt}`;
-      const filePath = `kitchen-images/${fileName}`;
-
+      const filePath = `${kitchen.id}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
   .from("kitchen-images") 
   .upload(filePath, blob);
