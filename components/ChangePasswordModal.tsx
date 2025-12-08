@@ -89,8 +89,8 @@ export default function ChangePasswordModal({ visible, onClose }: Props) {
               setOldPassword(text);
               if (errorMessage) setErrorMessage("");
             }}
-            placeholder="vana parool"
-            placeholderTextColor="#999"
+            placeholder="Vana parool"
+            placeholderTextColor="#393939"
             secureTextEntry
             style={styles.input}
             autoCapitalize="none"
@@ -103,8 +103,8 @@ export default function ChangePasswordModal({ visible, onClose }: Props) {
               setNewPassword(text);
               if (errorMessage) setErrorMessage("");
             }}
-            placeholder="uus parool"
-            placeholderTextColor="#999"
+            placeholder="Uus parool"
+            placeholderTextColor="#393939"
             secureTextEntry
             style={styles.input}
             autoCapitalize="none"
@@ -117,8 +117,8 @@ export default function ChangePasswordModal({ visible, onClose }: Props) {
               setConfirmPassword(text);
               if (errorMessage) setErrorMessage("");
             }}
-            placeholder="uus parool"
-            placeholderTextColor="#999"
+            placeholder="Uus parool"
+            placeholderTextColor="#393939"
             secureTextEntry
             style={styles.input}
             autoCapitalize="none"
@@ -146,7 +146,7 @@ export default function ChangePasswordModal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -158,20 +158,22 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   modal: {
-    width: 280,
-    backgroundColor: "#E8E6E1",
-    borderRadius: 20,
-    padding: 30,
-    alignItems: "center",
-    zIndex: 1,
-  },
+  width: 356,
+  backgroundColor: "#e7e7e7ff",
+  borderRadius: 24,
+  padding: 20,
+  paddingTop: 40,
+  alignItems: "center",
+  zIndex: 1,
+},
   title: {
-    fontSize: 20,
-    fontWeight: "400",
-    marginBottom: 20,
-    textAlign: "center",
-    color: "#333",
-  },
+  fontSize: 40,
+  fontWeight: "600",
+  marginBottom: 40,
+  textAlign: "center",
+  color: "#333",
+  textDecorationLine: "underline",
+},
   errorContainer: {
     width: "100%",
     backgroundColor: "#FFCDD2",
@@ -186,29 +188,40 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   input: {
-    width: "100%",
-    height: 50,
+    width: "70%",
+    height: 60,
     backgroundColor: "#FFFFFF",
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    fontSize: 16,
-    marginBottom: 15,
-    color: "#333",
+    borderRadius: 10,
+    paddingHorizontal: 24,
+    fontSize: 20,
+    marginBottom: 20,
+    color: "#1d1b1bff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    textAlign: "center"
   },
   saveButton: {
-    width: "100%",
-    height: 50,
+    width: "70%",
+    height: 60,
     backgroundColor: "#C8E6C9",
-    borderRadius: 25,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   saveButtonDisabled: {
     opacity: 0.6,
   },
   saveButtonText: {
-    fontSize: 18,
+    fontSize: 40,
     fontWeight: "500",
     color: "#5D4037",
   },
