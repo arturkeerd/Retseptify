@@ -1,15 +1,15 @@
+import { router } from "expo-router";
 import React from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Image,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
   ImageStyle,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from "react-native";
-import { router } from "expo-router";
 import ArrowIcon from "../assets/images/arrow.png";
 
 type RecipeIngredient = {
@@ -23,6 +23,7 @@ type Recipe = {
   title: string;
   imageUrl: string | null;
   ingredients: RecipeIngredient[];
+  kitchenColor?: string | null;
 };
 
 type Props = {
@@ -40,9 +41,19 @@ export const RecipeListItem: React.FC<Props> = ({
   const visibleIngredients = recipe.ingredients.slice(0, maxIngredientsToShow);
   const hasMoreIngredients = recipe.ingredients.length > maxIngredientsToShow;
 
+  const bgStyle = recipe.kitchenColor
+    ? { backgroundColor: recipe.kitchenColor }
+    : null;
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-      <View style={[styles.container, isExpanded && styles.containerExpanded]}>
+      <View
+        style={[
+          styles.container,
+          isExpanded && styles.containerExpanded,
+          bgStyle, // köögi värv override’ib default värvi, kui olemas
+        ]}
+      >
         {/* Peamine rida – retsepti nimi */}
         <Text style={styles.title} numberOfLines={1}>
           {recipe.title}
@@ -62,8 +73,7 @@ export const RecipeListItem: React.FC<Props> = ({
 
                 return (
                   <Text key={idx} style={styles.ingredientsLine}>
-                    {/* nime osa */}• {ing.name}
-                    {/* kui on mingi kogus/ühik, lisame vahe ja numbri */}
+                    • {ing.name}
                     {qtyPart ? ` ${qtyPart}` : ""}
                   </Text>
                 );
@@ -83,7 +93,7 @@ export const RecipeListItem: React.FC<Props> = ({
                   />
                 ) : (
                   <View style={styles.imagePlaceholderInner}>
-                    <Text style={styles.imageText}>PILT</Text>
+                    <Text style={styles.imageText}></Text>
                   </View>
                 )}
               </View>
@@ -133,7 +143,7 @@ const styles = StyleSheet.create<Styles>({
     paddingVertical: 18,
     marginBottom: 8,
     backgroundColor: "#4F6B60",
-      // Drop shadow (iOS)
+    // Drop shadow (iOS)
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
@@ -143,6 +153,8 @@ const styles = StyleSheet.create<Styles>({
     elevation: 5,
   },
   containerExpanded: {
+    // kui tahad eraldi expanded-stiili, jäta siia nt border vms;
+    // backgroundColor kattub kitchenColor inline-stiiliga
     backgroundColor: "#FFE9A6",
   },
   title: {
@@ -205,14 +217,14 @@ const styles = StyleSheet.create<Styles>({
     width: 48,
     height: 48,
     borderRadius: 24,
-    overflow: "hidden", // et pilt jääks ringi sisse
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
   },
   arrowImage: {
-    width: "100%", // täida kogu ring
+    width: "100%",
     height: "100%",
-    resizeMode: "cover", // või "contain", kui nii parem näeb
+    resizeMode: "cover",
   },
 });
 
