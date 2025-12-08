@@ -33,10 +33,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  unreadItem: {
-    borderWidth: 2,
-    borderColor: "#5D4037",
-  },
+  unreadDot: {
+  width: 10,
+  height: 10,
+  borderRadius: 5,
+  backgroundColor: '#FF0000',
+  position: 'absolute',
+  left: 8,
+  top: '50%',
+  marginTop: -5,
+},
   recipeName: {
     fontSize: 18,
     fontWeight: "500",

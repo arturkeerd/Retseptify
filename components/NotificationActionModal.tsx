@@ -1,15 +1,16 @@
 import React from "react";
 import {
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type NotificationActionModalProps = {
   visible: boolean;
   onClose: () => void;
+  onBackgroundPress: () => void;
   onApprove: () => void;
   onReject: () => void;
 };
@@ -17,6 +18,7 @@ type NotificationActionModalProps = {
 export default function NotificationActionModal({
   visible,
   onClose,
+  onBackgroundPress,
   onApprove,
   onReject,
 }: NotificationActionModalProps) {
@@ -29,10 +31,10 @@ export default function NotificationActionModal({
     >
       <View style={styles.modalOverlay}>
         <TouchableOpacity
-          style={styles.modalBackground}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+  style={styles.modalBackground}
+  activeOpacity={1}
+  onPress={onBackgroundPress}
+/>
 
         <View style={styles.modalContent}>
           <TouchableOpacity
