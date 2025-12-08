@@ -1,3 +1,4 @@
+// app/home/notifications/index.tsx
 import HomeButton from "@/components/HomeButton";
 import NotificationActionModal from "@/components/NotificationActionModal";
 import { supabase } from "@/lib/supabase";

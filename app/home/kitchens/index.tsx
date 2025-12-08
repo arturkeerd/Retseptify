@@ -1,3 +1,4 @@
+// app/home/kitchens/index.tsx
 import AddKitchenButton from "@/components/AddKitchenButton";
 import ColorPickerModal from "@/components/ColorPickerModal";
 import { APP_COLORS } from "@/components/colors";
@@ -69,15 +70,6 @@ export default function Kitchens() {
     setLoading(false);
   };
 
-  const getKitchenIcon = (name: string) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes("isiklik") || lowerName.includes("minu")) return "✓";
-    if (lowerName.includes("paral")) return "✗";
-    if (lowerName.includes("kampus")) return "⚙";
-    if (lowerName.includes("pompei")) return "✎";
-    if (lowerName.includes("humal")) return "●";
-    return "◆";
-  };
 
   const handleColorEdit = (kitchen: Kitchen) => {
     setEditingKitchen(kitchen);
@@ -119,40 +111,38 @@ export default function Kitchens() {
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.kitchensList}>
-          {kitchens.map((kitchen) => (
-            <View key={kitchen.id} style={styles.kitchenRow}>
-              <TouchableOpacity
-                style={[
-                  styles.kitchenButton,
-                  { backgroundColor: kitchen.color || "#FFFFFF" },
-                ]}
-                onPress={() => {
-                  router.push(`/home?kitchen=${kitchen.id}`);
-                }}
-              >
-                <Text style={styles.kitchenIcon}>
-                  {getKitchenIcon(kitchen.name)}
-                </Text>
-                <Text style={styles.kitchenName}>{kitchen.name}</Text>
+  <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.kitchensList}>
+        {kitchens.map((kitchen) => (
+          <View key={kitchen.id} style={styles.kitchenRow}>
+            <TouchableOpacity
+              style={styles.kitchenButton}
+              onPress={() => {
+                router.push(`/home?kitchen=${kitchen.id}`);
+              }}
+            >
+              <Text style={styles.kitchenName}>{kitchen.name}</Text>
 
-                {/* Edit button INSIDE kitchen button */}
+              {/* Colored circle with edit button */}
+              <View 
+                style={[
+                  styles.colorCircle,
+                  { backgroundColor: kitchen.color || "#CCCCCC" }
+                ]}
+              >
                 <TouchableOpacity
-                  style={[
-                    styles.colorEditButton,
-                    { backgroundColor: kitchen.color || "#FFFFFF" },
-                  ]}
+                  style={styles.colorEditButton}
                   onPress={() => handleColorEdit(kitchen)}
                 >
                   <Text style={styles.colorEditIcon}>✎</Text>
                 </TouchableOpacity>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+              </View>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
 
       <View style={styles.bottomContainer}>
         {/* Vasak pool - Add button */}
