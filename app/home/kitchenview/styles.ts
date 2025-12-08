@@ -4,12 +4,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8E6E1",
-  },
-  scrollContent: {
     paddingTop: 60,
     paddingHorizontal: 20,
-    paddingBottom: 140,
+    paddingBottom: 0,
+  },
+  card: {
+    flex: 1,
     alignItems: "center",
+    paddingTop: 20,
   },
   imageContainer: {
     position: "relative",
@@ -48,7 +50,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  colorButton: {
+  editIcon: {
     position: "absolute",
     right: 10,
     bottom: 10,
@@ -73,7 +75,9 @@ const styles = StyleSheet.create({
     width: 262,
     height: 65,
     backgroundColor: "#FFFFFF",
+    borderWidth: 0,
     borderRadius: 10,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
@@ -82,38 +86,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 1,
+    position: "relative",
   },
   buttonText: {
     fontSize: 40,
     color: "#333",
     fontWeight: "400",
   },
-  membersContainer: {
-    width: "100%",
-    marginTop: 20,
-  },
-  memberRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: 262,
-    height: 65,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  memberName: {
-    fontSize: 32,
-    color: "#333",
-    fontWeight: "400",
-  },
   removeButton: {
+    position: "absolute",
+    right: 10,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -128,7 +110,7 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     position: "absolute",
-    bottom: 10,
+    bottom: 20,
     left: 0,
     right: 0,
     flexDirection: "row",

@@ -1,3 +1,4 @@
+import ChangeNameModal from "@/components/ChangeNameModal";
 import ColorPickerModal from "@/components/ColorPickerModal";
 import HomeButton from "@/components/HomeButton";
 import ProfileButton from "@/components/ProfileButton";
@@ -10,10 +11,9 @@ import {
     ActivityIndicator,
     Alert,
     Image,
-    ScrollView,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import styles from "./styles";
 
@@ -37,13 +37,15 @@ type Member = {
 export default function KitchenView() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  
+
   const [kitchen, setKitchen] = useState<Kitchen | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [kitchenColor, setKitchenColor] = useState("#E8E6E1");
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
+  const [changeNameVisible, setChangeNameVisible] = useState(false);
 
   useEffect(() => {
     loadKitchen();
@@ -51,11 +53,13 @@ export default function KitchenView() {
 
   const loadKitchen = async () => {
     if (!id) return;
-    
+
     setLoading(true);
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       Alert.alert("Error", "Not logged in");
       setLoading(false);
@@ -78,18 +82,21 @@ export default function KitchenView() {
     }
 
     setKitchen(kitchenData as Kitchen);
+    setKitchenColor(kitchenData.color || "#E8E6E1");
 
     // Load members
     const { data: membersData, error: membersError } = await supabase
       .from("kitchen_members")
-      .select(`
+      .select(
+        `
         user_id,
         role,
         users (
           username,
           profile_image_url
         )
-      `)
+      `
+      )
       .eq("kitchen_id", id);
 
     if (membersError) {
@@ -102,7 +109,8 @@ export default function KitchenView() {
   };
 
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permissionResult.granted) {
       Alert.alert("Permission required", "Camera roll permission is required");
@@ -134,14 +142,14 @@ export default function KitchenView() {
       const filePath = `kitchen-images/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, blob);
+  .from("kitchen-images") 
+  .upload(filePath, blob);
 
-      if (uploadError) throw uploadError;
+if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
+const { data: { publicUrl } } = supabase.storage
+  .from("kitchen-images") 
+  .getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
         .from("kitchens")
@@ -160,23 +168,6 @@ export default function KitchenView() {
     }
   };
 
-  const handleColorSelect = async (color: string) => {
-    if (!kitchen) return;
-
-    const { error } = await supabase
-      .from("kitchens")
-      .update({ color })
-      .eq("id", kitchen.id);
-
-    if (error) {
-      console.error("Error updating color:", error);
-      Alert.alert("Error", "Failed to update color");
-    } else {
-      setKitchen({ ...kitchen, color });
-      setColorPickerVisible(false);
-    }
-  };
-
   const handleRemoveMember = async (userId: string) => {
     if (!kitchen || !currentUserId) return;
 
@@ -187,12 +178,12 @@ export default function KitchenView() {
     }
 
     Alert.alert(
-      "Remove member",
-      "Are you sure you want to remove this member?",
+      "Eemalda liige",
+      "Kas oled kindel et tahad selle liikme eemaldada?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Tühista", style: "cancel" },
         {
-          text: "Remove",
+          text: "Eemalda",
           style: "destructive",
           onPress: async () => {
             const { error } = await supabase
@@ -203,9 +194,9 @@ export default function KitchenView() {
 
             if (error) {
               console.error("Error removing member:", error);
-              Alert.alert("Error", "Failed to remove member");
+              Alert.alert("Viga", "Liikme eemaldamine ebaõnnestus");
             } else {
-              setMembers(members.filter(m => m.user_id !== userId));
+              setMembers(members.filter((m) => m.user_id !== userId));
             }
           },
         },
@@ -215,17 +206,25 @@ export default function KitchenView() {
 
   const isOwner = kitchen && currentUserId === kitchen.owner_user_id;
 
-  if (loading || !kitchen) {
+  if (loading && !kitchen) {
     return (
-      <View style={[styles.container, { backgroundColor: kitchen?.color || "#E8E6E1" }]}>
+      <View style={[styles.container, { backgroundColor: kitchenColor }]}>
         <ActivityIndicator size="large" color="#8B7355" />
       </View>
     );
   }
 
+  if (!kitchen) {
+    return (
+      <View style={styles.container}>
+        <Text>Kitchen not found</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={[styles.container, { backgroundColor: kitchen.color }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <View style={[styles.container, { backgroundColor: kitchenColor }]}>
+      <View style={styles.card}>
         {/* Kitchen Image */}
         <TouchableOpacity
           style={styles.imageContainer}
@@ -252,10 +251,12 @@ export default function KitchenView() {
 
           {/* Color picker button */}
           <TouchableOpacity
-            style={styles.colorButton}
+            style={styles.editIcon}
             onPress={() => setColorPickerVisible(true)}
           >
-            <View style={[styles.colorPreview, { backgroundColor: kitchen.color }]} />
+            <View
+              style={[styles.colorPreview, { backgroundColor: kitchenColor }]}
+            />
           </TouchableOpacity>
         </TouchableOpacity>
 
@@ -264,42 +265,44 @@ export default function KitchenView() {
           <Text style={styles.buttonText}>Kutsu</Text>
         </TouchableOpacity>
 
-        {/* Kitchen Name Button (placeholder - will add modal later) */}
-        <TouchableOpacity style={styles.button}>
+        {/* Kitchen Name Button */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setChangeNameVisible(true)}
+        >
           <Text style={styles.buttonText}>{kitchen.name}</Text>
         </TouchableOpacity>
 
         {/* Members List */}
-        <View style={styles.membersContainer}>
-          {members.map((member) => {
-            const isOwnerMember = member.user_id === kitchen.owner_user_id;
-            
-            return (
-              <View key={member.user_id} style={styles.memberRow}>
-                <Text style={styles.memberName}>
-                  {member.users.username}
-                  {isOwnerMember && " 👑"}
-                </Text>
-                
-                {!isOwnerMember && isOwner && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveMember(member.user_id)}
-                  >
-                    <Text style={styles.removeButtonText}>✕</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })}
-        </View>
-      </ScrollView>
+        {members.map((member) => {
+          const isOwnerMember = member.user_id === kitchen.owner_user_id;
+
+          return (
+            <View key={member.user_id} style={styles.button}>
+              <Text style={styles.buttonText}>
+                {member.users.username}
+                {isOwnerMember && " 👑"}
+              </Text>
+
+              {!isOwnerMember && isOwner && (
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => handleRemoveMember(member.user_id)}
+                >
+                  <Text style={styles.removeButtonText}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        })}
+      </View>
 
       {/* Bottom Navigation */}
       <View style={styles.bottomContainer}>
         <View style={styles.leftSide}>
           <HomeButton />
         </View>
+
         <View style={styles.rightSide}>
           <ProfileButton />
         </View>
@@ -309,11 +312,44 @@ export default function KitchenView() {
       <ColorPickerModal
         visible={colorPickerVisible}
         onClose={() => setColorPickerVisible(false)}
-        onSelectColor={handleColorSelect}
-        currentColor={kitchen.color}
+        onSelectColor={async (color) => {
+          setKitchenColor(color);
+
+          if (kitchen) {
+            const { error } = await supabase
+              .from("kitchens")
+              .update({ color: color })
+              .eq("id", kitchen.id);
+
+            if (error) {
+              console.error("Error saving color:", error);
+            }
+          }
+        }}
+        currentColor={kitchenColor}
         colors={APP_COLORS}
-        title={kitchen.name}
-        subtitle="Vali värv"
+      />
+
+      {/* Change Name Modal */}
+      <ChangeNameModal
+        visible={changeNameVisible}
+        onClose={() => setChangeNameVisible(false)}
+        currentName={kitchen.name}
+        onNameChanged={async (newName) => {
+          if (kitchen) {
+            const { error } = await supabase
+              .from("kitchens")
+              .update({ name: newName })
+              .eq("id", kitchen.id);
+
+            if (error) {
+              console.error("Error updating name:", error);
+              Alert.alert("Viga", "Nime uuendamine ebaõnnestus");
+            } else {
+              setKitchen({ ...kitchen, name: newName });
+            }
+          }
+        }}
       />
     </View>
   );
