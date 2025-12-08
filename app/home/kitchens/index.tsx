@@ -117,11 +117,11 @@ export default function Kitchens() {
         {kitchens.map((kitchen) => (
           <View key={kitchen.id} style={styles.kitchenRow}>
             <TouchableOpacity
-              style={styles.kitchenButton}
-              onPress={() => {
-                router.push(`/home?kitchen=${kitchen.id}`);
-              }}
-            >
+  style={styles.kitchenButton}
+  onPress={() => {
+    router.push(`/home/kitchenview?id=${kitchen.id}`);
+  }}
+>
               <Text style={styles.kitchenName}>{kitchen.name}</Text>
 
               {/* Colored circle with edit button */}
