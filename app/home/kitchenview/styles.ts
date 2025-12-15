@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: "relative",
-    marginBottom: 30,
+    marginBottom: 0,
   },
   kitchenImage: {
     width: 270,
@@ -126,6 +126,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "flex-end",
   },
+
+  centerSide: {
+  flex: 1,
+  alignItems: "center",
+},
+
+inviteContainer: {
+  position: "absolute",
+  bottom: 10,
+  left: 162,
+  zIndex: 10,
+},
 });
 
 export default styles;

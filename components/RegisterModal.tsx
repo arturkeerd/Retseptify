@@ -1,20 +1,20 @@
-import React, { useState } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from "react-native";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { registerWithEmail } from "@/hooks/useAuth";
-import WhiteTextField from "./WhiteTextField";
+import { zodResolver } from "@hookform/resolvers/zod";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Router } from "expo-router";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Text,
+  View
+} from "react-native";
+import { z } from "zod";
 import WhiteTextButton from "./WhiteTextButton";
+import WhiteTextField from "./WhiteTextField";
 
 const schema = z
   .object({
@@ -34,12 +34,14 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   onRegistered?: () => void;
+  router: Router;
 };
 
 export default function RegisterModal({
   visible,
   onClose,
   onRegistered,
+  router, 
 }: Props) {
   const {
     setValue,
@@ -52,18 +54,27 @@ export default function RegisterModal({
   const [err, setErr] = useState<string | null>(null);
 
   const onSubmit = handleSubmit(async ({ displayName, email, password }) => {
-    setErr(null);
-    setSubmitting(true);
-    const res = await registerWithEmail(
-      email.trim(),
-      password,
-      displayName.trim()
-    );
-    setSubmitting(false);
-    if (!res.ok) return setErr(res.error);
+  setErr(null);
+  setSubmitting(true);
+  const res = await registerWithEmail(
+    email.trim(),
+    password,
+    displayName.trim()
+  );
+  setSubmitting(false);
+  if (!res.ok) return setErr(res.error);
+  
+  // Check for pending invite
+  const pendingToken = await AsyncStorage.getItem("pending_invite_token");
+  if (pendingToken) {
+    await AsyncStorage.removeItem("pending_invite_token");
+    onClose();
+    router.replace(`/invite/${pendingToken}`);
+  } else {
     onRegistered?.();
     onClose();
-  });
+  }
+});
 
   return (
     <Modal visible={visible} animationType="fade" transparent>

@@ -1,18 +1,17 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
+  Pressable,
+  Text,
+  TextInput,
+  View
 } from "react-native";
-import { useRouter } from "expo-router";
-import { loginWithEmail } from "../hooks/useAuth";
 import RegisterModal from "../components/RegisterModal";
+import { loginWithEmail } from "../hooks/useAuth";
 import { styles } from "./styles";
 
 export default function LoginScreen() {
@@ -24,16 +23,24 @@ export default function LoginScreen() {
   const [showRegister, setShowRegister] = useState(false);
 
   async function onLogin() {
-    setBusy(true);
-    setError(null);
-    const res = await loginWithEmail(email.trim(), password);
-    setBusy(false);
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
+  setBusy(true);
+  setError(null);
+  const res = await loginWithEmail(email.trim(), password);
+  setBusy(false);
+  if (!res.ok) {
+    setError(res.error);
+    return;
+  }
+  
+  // Check for pending invite
+  const pendingToken = await AsyncStorage.getItem("pending_invite_token");
+  if (pendingToken) {
+    await AsyncStorage.removeItem("pending_invite_token");
+    router.replace(`/invite/${pendingToken}`);
+  } else {
     router.replace("/home");
   }
+}
 
   return (
     <>
@@ -87,6 +94,7 @@ export default function LoginScreen() {
       <RegisterModal
         visible={showRegister}
         onClose={() => setShowRegister(false)}
+        router={router}
       />
     </>
   );

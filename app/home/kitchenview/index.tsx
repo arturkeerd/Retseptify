@@ -1,19 +1,21 @@
 import ChangeNameModal from "@/components/ChangeNameModal";
 import ColorPickerModal from "@/components/ColorPickerModal";
 import HomeButton from "@/components/HomeButton";
+import InviteButton from "@/components/InviteButton";
 import ProfileButton from "@/components/ProfileButton";
 import { APP_COLORS } from "@/components/colors";
 import { supabase } from "@/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import styles from "./styles";
 
@@ -259,19 +261,16 @@ const { data: { publicUrl } } = supabase.storage
           </TouchableOpacity>
         </TouchableOpacity>
 
-        {/* Invite Button (placeholder for now) */}
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Kutsu</Text>
-        </TouchableOpacity>
+        {/* Invite Button */}
+<InviteButton kitchenId={kitchen.id} />
 
-        {/* Kitchen Name Button */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => setChangeNameVisible(true)}
-        >
-          <Text style={styles.buttonText}>{kitchen.name}</Text>
-        </TouchableOpacity>
-
+{/* Kitchen Name Button */}
+<TouchableOpacity
+  style={styles.button}
+  onPress={() => setChangeNameVisible(true)}
+>
+  <Text style={styles.buttonText}>{kitchen.name}</Text>
+</TouchableOpacity>
         {/* Members List */}
         {members.map((member) => {
           const isOwnerMember = member.user_id === kitchen.owner_user_id;
@@ -298,14 +297,16 @@ const { data: { publicUrl } } = supabase.storage
 
       {/* Bottom Navigation */}
       <View style={styles.bottomContainer}>
-        <View style={styles.leftSide}>
-          <HomeButton />
-        </View>
-
-        <View style={styles.rightSide}>
-          <ProfileButton />
-        </View>
-      </View>
+  <View style={styles.leftSide}>
+    {/* Tühi */}
+  </View>
+  <View style={styles.centerSide}>
+    <HomeButton />
+  </View>
+  <View style={styles.rightSide}>
+    <ProfileButton />
+  </View>
+</View>
 
       {/* Color Picker Modal */}
       <ColorPickerModal
