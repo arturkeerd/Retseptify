@@ -1,18 +1,18 @@
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
   ActivityIndicator,
+  Image,
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
+  Pressable,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { loginWithEmail } from "../hooks/useAuth";
 import RegisterModal from "../components/RegisterModal";
+import { loginWithEmail } from "../hooks/useAuth";
 import { styles } from "./styles";
 
 export default function LoginScreen() {
@@ -37,52 +37,77 @@ export default function LoginScreen() {
 
   return (
     <>
-      <KeyboardAvoidingView
-        behavior={Platform.select({ ios: "padding", android: "height" })}
-        style={styles.flex}
+      <ImageBackground
+        source={require("../assets/images/background.png")}
+        style={styles.bg}
+        resizeMode="cover"
       >
-        <View style={styles.container}>
-          <Text style={styles.title}>Retseptify</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: "padding", android: "height" })}
+          style={styles.flex}
+        >
+          <View style={styles.container}>
+            <View style={styles.logoWrap}>
+              <Image
+                source={require("../assets/images/logo.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
 
-          <TextInput
-            placeholder="username või e-mail"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-            style={styles.input}
-          />
+            <View style={styles.form}>
+              <TextInput
+                placeholder="e-mail"
+                placeholderTextColor={styles.placeholder.color}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
+                style={styles.input}
+              />
 
-          <TextInput
-            placeholder="password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            style={styles.input}
-          />
+              <TextInput
+                placeholder="parool"
+                placeholderTextColor={styles.placeholder.color}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                style={styles.input}
+              />
 
-          {!!error && <Text style={styles.errorText}>{error}</Text>}
+              {!!error && <Text style={styles.errorText}>{error}</Text>}
 
-          <Pressable
-            onPress={onLogin}
-            style={styles.btnPrimary}
-            disabled={busy}
-          >
-            {busy ? (
-              <ActivityIndicator />
-            ) : (
-              <Text style={styles.btnPrimaryText}>Log in</Text>
-            )}
-          </Pressable>
+              <Pressable
+                onPress={onLogin}
+                style={({ pressed }) => [
+                  styles.btn,
+                  styles.btnPrimary,
+                  pressed && styles.btnPressed,
+                  busy && styles.btnDisabled,
+                ]}
+                disabled={busy}
+              >
+                {busy ? (
+                  <ActivityIndicator />
+                ) : (
+                  <Text style={styles.btnText}>Logi sisse</Text>
+                )}
+              </Pressable>
 
-          <Pressable
-            onPress={() => setShowRegister(true)}
-            style={styles.btnSecondary}
-          >
-            <Text style={styles.btnSecondaryText}>Register</Text>
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
+              <Pressable
+                onPress={() => setShowRegister(true)}
+                style={({ pressed }) => [
+                  styles.btn,
+                  styles.btnSecondary,
+                  pressed && styles.btnPressed,
+                ]}
+              >
+                <Text style={styles.btnText}>Registreeri</Text>
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </ImageBackground>
 
       <RegisterModal
         visible={showRegister}

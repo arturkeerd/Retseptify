@@ -2,38 +2,91 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   flex: { flex: 1 },
+
+  // full-screen background
+  bg: {
+    flex: 1,
+  },
+
+  // center everything like figma
   container: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 24,
-    gap: 12,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 12,
+
+  logoWrap: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 28,
   },
+  logo: {
+    width: 280,
+    height: 190,
+  },
+
+  // form block width similar to figma
+  form: {
+    width: "100%",
+    maxWidth: 340,
+    gap: 16,
+    alignItems: "center",
+  },
+
   input: {
-    borderWidth: 1,
-    borderColor: "#DADADA",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    width: "100%",
+    backgroundColor: "#F5F7E8",
+    borderWidth: 1.5,
+    borderColor: "#3F342E",
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#2B2B2B",
   },
-  errorText: { color: "#c62828", textAlign: "center" },
+
+  placeholder: {
+    color: "#6B6B6B",
+  },
+
+  errorText: {
+    color: "#c62828",
+    textAlign: "center",
+    width: "100%",
+    marginTop: -6,
+  },
+
+  btn: {
+    width: 140,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#3F342E",
+    backgroundColor: "#F5F7E8",
+  },
+
   btnPrimary: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: "#EAEAEA",
+    marginTop: 6,
   },
-  btnPrimaryText: { fontWeight: "700" },
+
   btnSecondary: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
+    marginTop: 6,
   },
-  btnSecondaryText: { fontWeight: "600", color: "#333" },
+
+  btnText: {
+    fontWeight: "700",
+    color: "#3F342E",
+    fontSize: 15,
+  },
+
+  btnPressed: {
+    opacity: 0.85,
+  },
+
+  btnDisabled: {
+    opacity: 0.6,
+  },
 });
