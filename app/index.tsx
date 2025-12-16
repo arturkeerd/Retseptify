@@ -24,95 +24,93 @@ export default function LoginScreen() {
   const [showRegister, setShowRegister] = useState(false);
 
   async function onLogin() {
-    setBusy(true);
     setError(null);
+
+    if (!email.trim()) return setError("Palun sisesta e-mail.");
+    if (!password) return setError("Palun sisesta parool.");
+
+    setBusy(true);
     const res = await loginWithEmail(email.trim(), password);
     setBusy(false);
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
+
+    if (!res.ok) return setError(res.error);
     router.replace("/home");
   }
 
-  return (
-    <>
-      <ImageBackground
-        source={require("../assets/images/background.png")}
-        style={styles.bg}
-        resizeMode="cover"
+return (
+  <ImageBackground
+    source={require("../assets/images/background.png")}
+    style={styles.bg}
+    resizeMode="cover"
+  >
+    {/* 🔒 lukustab ekraani kõrguse */}
+    <View style={styles.screenLock}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.flex}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.select({ ios: "padding", android: "height" })}
-          style={styles.flex}
-        >
+        <View style={styles.content}>
           <View style={styles.container}>
-            <View style={styles.logoWrap}>
-              <Image
-                source={require("../assets/images/logo.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
+            <Image
+              source={require("../assets/images/logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
 
-            <View style={styles.form}>
-              <TextInput
-                placeholder="e-mail"
-                placeholderTextColor={styles.placeholder.color}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-                style={styles.input}
-              />
+            <TextInput
+              placeholder="e-mail"
+              placeholderTextColor="#6B6B6B"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+              style={styles.input}
+            />
 
-              <TextInput
-                placeholder="parool"
-                placeholderTextColor={styles.placeholder.color}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-                style={styles.input}
-              />
+            <TextInput
+              placeholder="password"
+              placeholderTextColor="#6B6B6B"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              style={styles.input}
+            />
 
-              {!!error && <Text style={styles.errorText}>{error}</Text>}
+            {!!error && <Text style={styles.errorText}>{error}</Text>}
 
-              <Pressable
-                onPress={onLogin}
-                style={({ pressed }) => [
-                  styles.btn,
-                  styles.btnPrimary,
-                  pressed && styles.btnPressed,
-                  busy && styles.btnDisabled,
-                ]}
-                disabled={busy}
-              >
-                {busy ? (
-                  <ActivityIndicator />
-                ) : (
-                  <Text style={styles.btnText}>Logi sisse</Text>
-                )}
-              </Pressable>
+            <Pressable
+              onPress={onLogin}
+              style={({ pressed }) => [
+                styles.btn,
+                pressed && styles.btnPressed,
+              ]}
+              disabled={busy}
+            >
+              {busy ? (
+                <ActivityIndicator />
+              ) : (
+                <Text style={styles.btnText}>Log in</Text>
+              )}
+            </Pressable>
 
-              <Pressable
-                onPress={() => setShowRegister(true)}
-                style={({ pressed }) => [
-                  styles.btn,
-                  styles.btnSecondary,
-                  pressed && styles.btnPressed,
-                ]}
-              >
-                <Text style={styles.btnText}>Registreeri</Text>
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={() => setShowRegister(true)}
+              style={({ pressed }) => [
+                styles.btn,
+                pressed && styles.btnPressed,
+              ]}
+            >
+              <Text style={styles.btnText}>Register</Text>
+            </Pressable>
           </View>
-        </KeyboardAvoidingView>
-      </ImageBackground>
+        </View>
+      </KeyboardAvoidingView>
 
       <RegisterModal
         visible={showRegister}
         onClose={() => setShowRegister(false)}
       />
-    </>
-  );
+    </View>
+  </ImageBackground>
+);
 }

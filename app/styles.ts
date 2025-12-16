@@ -1,4 +1,6 @@
-import { StyleSheet } from "react-native";
+import { Dimensions, StyleSheet } from "react-native";
+
+const { height: SCREEN_H } = Dimensions.get("screen");
 
 export const styles = StyleSheet.create({
   flex: { flex: 1 },
@@ -6,14 +8,8 @@ export const styles = StyleSheet.create({
   // full-screen background
   bg: {
     flex: 1,
-  },
-
-  // center everything like figma
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 24,
+    width: "100%",
+    height: "100%"
   },
 
   logoWrap: {
@@ -57,17 +53,6 @@ export const styles = StyleSheet.create({
     marginTop: -6,
   },
 
-  btn: {
-    width: 140,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "#3F342E",
-    backgroundColor: "#F5F7E8",
-  },
-
   btnPrimary: {
     marginTop: 6,
   },
@@ -89,4 +74,32 @@ export const styles = StyleSheet.create({
   btnDisabled: {
     opacity: 0.6,
   },
+
+  content: {
+    flex: 1,
+    justifyContent: "center",
+  },
+
+  container: {
+    alignItems: "center",
+    paddingHorizontal: 24,
+    gap: 16,
+  },
+
+  btn: {
+    width: 140,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#3F342E",
+    backgroundColor: "#F5F7E8",
+  },
+
+screenLock: {
+  flex: 1,
+  minHeight: SCREEN_H,
+  overflow: "hidden",
+},
+
 });

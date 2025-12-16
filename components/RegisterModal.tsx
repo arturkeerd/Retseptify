@@ -1,20 +1,18 @@
-import React, { useState } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from "react-native";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { registerWithEmail } from "@/hooks/useAuth";
-import WhiteTextField from "./WhiteTextField";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Text,
+  View,
+} from "react-native";
+import { z } from "zod";
 import WhiteTextButton from "./WhiteTextButton";
+import WhiteTextField from "./WhiteTextField";
 
 const schema = z
   .object({
@@ -36,31 +34,52 @@ type Props = {
   onRegistered?: () => void;
 };
 
-export default function RegisterModal({
-  visible,
-  onClose,
-  onRegistered,
-}: Props) {
+export default function RegisterModal({ visible, onClose, onRegistered }: Props) {
   const {
     setValue,
     handleSubmit,
-    formState: { errors },
+    reset,
+    trigger,
+    formState: { errors, isValid },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: "onChange",
+    defaultValues: {
+      displayName: "",
+      email: "",
+      password: "",
+      password2: "",
+    },
   });
+
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Kui modal avatakse/suletakse: puhasta vead ja väljad
+  useEffect(() => {
+    if (!visible) {
+      setErr(null);
+      setSubmitting(false);
+      reset();
+    } else {
+      // kui tahad, et avamisel kohe “isValid” oleks korrektne
+      trigger();
+    }
+  }, [visible, reset, trigger]);
 
   const onSubmit = handleSubmit(async ({ displayName, email, password }) => {
     setErr(null);
     setSubmitting(true);
+
     const res = await registerWithEmail(
       email.trim(),
       password,
       displayName.trim()
     );
+
     setSubmitting(false);
     if (!res.ok) return setErr(res.error);
+
     onRegistered?.();
     onClose();
   });
@@ -86,9 +105,7 @@ export default function RegisterModal({
               placeholder="E-mail"
               keyboardType="email-address"
               autoCapitalize="none"
-              onChangeText={(t) =>
-                setValue("email", t, { shouldValidate: true })
-              }
+              onChangeText={(t) => setValue("email", t, { shouldValidate: true })}
               errorText={errors.email?.message}
             />
 
@@ -118,10 +135,12 @@ export default function RegisterModal({
                 onPress={onClose}
                 variant="secondary"
               />
+
               <WhiteTextButton
                 label={submitting ? "" : "Registreeri"}
                 onPress={onSubmit}
                 rightNode={submitting ? <ActivityIndicator /> : undefined}
+                disabled={submitting || !isValid}
               />
             </View>
           </View>
