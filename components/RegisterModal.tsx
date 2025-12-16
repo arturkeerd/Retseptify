@@ -1,20 +1,20 @@
-import { registerWithEmail } from "@/hooks/useAuth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Router } from "expo-router";
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
+  View,
   Text,
-  View
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { registerWithEmail } from "@/hooks/useAuth";
 import WhiteTextButton from "./WhiteTextButton";
 import WhiteTextField from "./WhiteTextField";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 const schema = z
   .object({
@@ -34,53 +34,73 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   onRegistered?: () => void;
-  router: Router;
 };
 
-export default function RegisterModal({
-  visible,
-  onClose,
-  onRegistered,
-  router, 
-}: Props) {
+export default function RegisterModal({ visible, onClose, onRegistered }: Props) {
+  const router = useRouter();
+
   const {
     setValue,
     handleSubmit,
-    formState: { errors },
+    reset,
+    trigger,
+    formState: { errors, isValid },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: "onChange",
+    defaultValues: {
+      displayName: "",
+      email: "",
+      password: "",
+      password2: "",
+    },
   });
+
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!visible) {
+      setErr(null);
+      setSubmitting(false);
+      reset();
+    } else {
+      trigger();
+    }
+  }, [visible, reset, trigger]);
+
   const onSubmit = handleSubmit(async ({ displayName, email, password }) => {
-  setErr(null);
-  setSubmitting(true);
-  const res = await registerWithEmail(
-    email.trim(),
-    password,
-    displayName.trim()
-  );
-  setSubmitting(false);
-  if (!res.ok) return setErr(res.error);
-  
-  // Check for pending invite
-  const pendingToken = await AsyncStorage.getItem("pending_invite_token");
-  if (pendingToken) {
-    await AsyncStorage.removeItem("pending_invite_token");
-    onClose();
-    router.replace(`/invite/${pendingToken}`);
-  } else {
+    setErr(null);
+    setSubmitting(true);
+
+    const res = await registerWithEmail(
+      email.trim(),
+      password,
+      displayName.trim()
+    );
+
+    setSubmitting(false);
+    if (!res.ok) return setErr(res.error);
+
+    // ✅ pending invite flow
+    const pendingToken = await AsyncStorage.getItem("pending_invite_token");
+    if (pendingToken) {
+      await AsyncStorage.removeItem("pending_invite_token");
+      onClose();
+      router.replace(`/invite/${pendingToken}`);
+      return;
+    }
+
     onRegistered?.();
     onClose();
-  }
-});
+  });
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
       <View style={s.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.select({ ios: "padding", android: "height" })}
+          style={s.kav}
         >
           <View style={s.modal}>
             <Text style={s.title}>Registreerimine</Text>
@@ -129,10 +149,12 @@ export default function RegisterModal({
                 onPress={onClose}
                 variant="secondary"
               />
+
               <WhiteTextButton
                 label={submitting ? "" : "Registreeri"}
                 onPress={onSubmit}
                 rightNode={submitting ? <ActivityIndicator /> : undefined}
+                disabled={submitting || !isValid}
               />
             </View>
           </View>
@@ -148,9 +170,19 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
-  modal: { backgroundColor: "#fff", borderRadius: 16, padding: 20 },
+  kav: {
+    width: "100%",
+    maxWidth: 420,
+  },
+  modal: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+  },
   title: {
     fontSize: 22,
     fontWeight: "700",
