@@ -17,6 +17,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install react-native-url-polyfill
    npm install @supabase/supabase-js
    npm install
+   npm i iceberg-js
    ```
 
 2. Start the app
