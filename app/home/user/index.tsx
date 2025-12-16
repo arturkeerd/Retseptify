@@ -1,6 +1,7 @@
-import BackgroundColorPicker from "@/components/BackgroundColorPicker";
 import ChangeNameModal from "@/components/ChangeNameModal";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
+import ColorPickerModal from "@/components/ColorPickerModal";
+import { APP_COLORS } from "@/components/colors";
 import { supabase } from "@/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -23,6 +24,7 @@ type UserProfile = {
   username: string;
   email: string;
   profile_image_url: string | null;
+  background_color: string | null;
   created_at: string;
 };
 
@@ -65,6 +67,7 @@ export default function Profile() {
     } else if (data) {
       setProfile(data as UserProfile);
       setUsername(data.username);
+      setBackgroundColor(data.background_color || "#E8E6E1");
     }
 
     setLoading(false);
@@ -187,99 +190,111 @@ const pickImage = async () => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+  <View style={[styles.container, { backgroundColor }]}>
 
-      <View style={styles.card}>
+    <View style={styles.card}>
+      <TouchableOpacity
+        style={styles.imageContainer}
+        onPress={pickImage}
+        disabled={uploading}
+      >
+        {profile.profile_image_url ? (
+          <Image
+            source={{ uri: profile.profile_image_url }}
+            style={styles.profileImage}
+          />
+        ) : (
+          <View style={styles.placeholderImage}>
+            <Text style={styles.placeholderText}>
+              {profile.username.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
+        {uploading && (
+          <View style={styles.uploadingOverlay}>
+            <ActivityIndicator size="small" color="#fff" />
+          </View>
+        )}
         <TouchableOpacity
-          style={styles.imageContainer}
-          onPress={pickImage}
-          disabled={uploading}
+          style={styles.editIcon}
+          onPress={() => setColorPickerVisible(true)}
         >
-          {profile.profile_image_url ? (
-            <Image
-              source={{ uri: profile.profile_image_url }}
-              style={styles.profileImage}
-            />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>
-                {profile.username.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-          {uploading && (
-            <View style={styles.uploadingOverlay}>
-              <ActivityIndicator size="small" color="#fff" />
-            </View>
-          )}
-          <TouchableOpacity
-            style={styles.editIcon}
-            onPress={() => setColorPickerVisible(true)}
-          >
-            <View style={[styles.colorPreview, { backgroundColor: backgroundColor }]} />
-          </TouchableOpacity>
+          <View style={[styles.colorPreview, { backgroundColor: backgroundColor }]} />
         </TouchableOpacity>
+      </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.usernameInput}
-          onPress={() => setChangeNameVisible(true)}
-        >
-          <Text style={styles.usernameText}>{username}</Text>
-        </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.usernameInput}
+        onPress={() => setChangeNameVisible(true)}
+      >
+        <Text style={styles.usernameText}>{username}</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
-          <Text style={styles.buttonText}>Muuda parool</Text>
-        </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
+        <Text style={styles.buttonText}>Muuda parool</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleManageKitchens}>
-          <Text style={styles.buttonText}>Köögid</Text>
-        </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={handleManageKitchens}>
+        <Text style={styles.buttonText}>Köögid</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-          <Text style={styles.buttonText}>Logi välja</Text>
-        </TouchableOpacity>
-
-        <View style={styles.bottomContainer}>
-          {/* Vasak pool - tühi või nupp */}
-          <View style={styles.leftSide}>
-            {/* Tühi praegu */}
-          </View>
-          
-          {/* Keskel - ALATI HomeButton */}
-          <View style={styles.centerSide}>
-            <HomeButton />
-          </View>
-          
-          {/* Parem pool - NotificationButton */}
-          <View style={styles.rightSide}>
-            <NotificationButton />
-          </View>
-        </View>
-      </View>
-
-      <BackgroundColorPicker
-        visible={colorPickerVisible}
-        onClose={() => setColorPickerVisible(false)}
-        onSelectColor={setBackgroundColor}
-        currentColor={backgroundColor}
-      />
-
-      <ChangeNameModal
-        visible={changeNameVisible}
-        onClose={() => setChangeNameVisible(false)}
-        currentName={username}
-        onNameChanged={(newName) => {
-          setUsername(newName);
-          if (profile) {
-            setProfile({ ...profile, username: newName });
-          }
-        }}
-      />
-
-      <ChangePasswordModal
-        visible={changePasswordVisible}
-        onClose={() => setChangePasswordVisible(false)}
-      />
+      <TouchableOpacity style={styles.button} onPress={handleSignOut}>
+        <Text style={styles.buttonText}>Logi välja</Text>
+      </TouchableOpacity>
     </View>
-  );
+
+    {/* Moved outside card */}
+    <View style={styles.bottomContainer}>
+      <View style={styles.leftSide}>
+        {/* Tühi praegu */}
+      </View>
+      
+      <View style={styles.centerSide}>
+        <HomeButton />
+      </View>
+      
+      <View style={styles.rightSide}>
+        <NotificationButton />
+      </View>
+    </View>
+
+    <ColorPickerModal
+  visible={colorPickerVisible}
+  onClose={() => setColorPickerVisible(false)}
+  onSelectColor={async (color) => {
+    setBackgroundColor(color);
+    
+    if (profile) {
+      const { error } = await supabase
+        .from("users")
+        .update({ background_color: color })
+        .eq("id", profile.id);
+      
+      if (error) {
+        console.error("Error saving background color:", error);
+      }
+    }
+  }}
+  currentColor={backgroundColor}
+  colors={APP_COLORS}
+/>
+
+    <ChangeNameModal
+      visible={changeNameVisible}
+      onClose={() => setChangeNameVisible(false)}
+      currentName={username}
+      onNameChanged={(newName) => {
+        setUsername(newName);
+        if (profile) {
+          setProfile({ ...profile, username: newName });
+        }
+      }}
+    />
+
+    <ChangePasswordModal
+      visible={changePasswordVisible}
+      onClose={() => setChangePasswordVisible(false)}
+    />
+  </View>
+);
 }

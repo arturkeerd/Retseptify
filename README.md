@@ -7,7 +7,8 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 1. Install dependencies
 
    ```bash
-
+   npx expo install @react-native-async-storage/async-storage
+   npx expo install expo-clipboard
    npm install @react-navigation/native-stack
    npm install @react-navigation/native
    npm install expo

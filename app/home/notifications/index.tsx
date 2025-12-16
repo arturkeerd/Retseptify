@@ -1,3 +1,4 @@
+// app/home/notifications/index.tsx
 import HomeButton from "@/components/HomeButton";
 import NotificationActionModal from "@/components/NotificationActionModal";
 import { supabase } from "@/lib/supabase";
@@ -103,49 +104,56 @@ export default function Notifications() {
 
     setLoading(false);
   };
+    const handleBackgroundPress = () => {
+      setModalVisible(false);
+    };
 
-  const handleNotificationPress = async (notification: Notification) => {
-    setSelectedNotification(notification);
-    setModalVisible(true);
+  const handleNotificationPress = (notification: Notification) => {
+  setSelectedNotification(notification);
+  setModalVisible(true);
+};
 
-    // Mark as read
-    if (!notification.is_read) {
-      await supabase
-        .from("notifications")
-        .update({ is_read: true })
-        .eq("id", notification.id);
+  const handleApprove = async () => {
+  if (!selectedNotification) return;
 
-      // Update local state
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notification.id ? { ...n, is_read: true } : n
-        )
-      );
-    }
-  };
-
-  const handleApprove = () => {
-    // TODO: Navigate to recipe edit
-    setModalVisible(false);
-    // router.push(`/recipe/${selectedNotification?.recipe_id}/edit`);
-  };
-
-  const handleReject = async () => {
-    if (!selectedNotification) return;
-
-    // Delete notification
+  // Mark as read
+  if (!selectedNotification.is_read) {
     await supabase
       .from("notifications")
-      .delete()
+      .update({ is_read: true })
       .eq("id", selectedNotification.id);
 
-    // Remove from local state
     setNotifications((prev) =>
-      prev.filter((n) => n.id !== selectedNotification.id)
+      prev.map((n) =>
+        n.id === selectedNotification.id ? { ...n, is_read: true } : n
+      )
     );
+  }
 
-    setModalVisible(false);
-  };
+  setModalVisible(false);
+  // TODO: Navigate to recipe edit
+  // router.push(`/recipe/${selectedNotification?.recipe_id}/edit`);
+};
+
+  const handleReject = async () => {
+  if (!selectedNotification) return;
+
+  // Mark as read
+  if (!selectedNotification.is_read) {
+    await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", selectedNotification.id);
+
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === selectedNotification.id ? { ...n, is_read: true } : n
+      )
+    );
+  }
+
+  setModalVisible(false);
+};
 
   if (loading) {
     return (
@@ -167,25 +175,25 @@ export default function Notifications() {
           </View>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.notificationItem,
-              { backgroundColor: item.kitchens?.color || "#FFFFFF" },
-              !item.is_read && styles.unreadItem,
-            ]}
-            onPress={() => handleNotificationPress(item)}
-          >
-            <Text style={styles.recipeName}>
-              {item.recipes?.title || "Retsept"}
-            </Text>
-            {userProfile?.profile_image_url && (
-              <Image
-                source={{ uri: userProfile.profile_image_url }}
-                style={styles.userImage}
-              />
-            )}
-          </TouchableOpacity>
-        )}
+  <TouchableOpacity
+    style={[
+      styles.notificationItem,
+      { backgroundColor: item.kitchens?.color || "#FFFFFF" },
+    ]}
+    onPress={() => handleNotificationPress(item)}
+  >
+    {!item.is_read && <View style={styles.unreadDot} />}
+    <Text style={styles.recipeName}>
+      {item.recipes?.title || "Retsept"}
+    </Text>
+    {userProfile?.profile_image_url && (
+      <Image
+        source={{ uri: userProfile.profile_image_url }}
+        style={styles.userImage}
+      />
+    )}
+  </TouchableOpacity>
+)}
       />
 
       <View style={styles.bottomContainer}>
@@ -222,11 +230,30 @@ export default function Notifications() {
         </View>
 
       <NotificationActionModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onApprove={handleApprove}
-        onReject={handleReject}
-      />
+  visible={modalVisible}
+  onClose={async () => {
+    if (!selectedNotification) return;
+    
+    // Mark as read
+    if (!selectedNotification.is_read) {
+      await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", selectedNotification.id);
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === selectedNotification.id ? { ...n, is_read: true } : n
+        )
+      );
+    }
+    
+    setModalVisible(false);
+  }}
+  onBackgroundPress={handleBackgroundPress}
+  onApprove={handleApprove}
+  onReject={handleReject}
+/>
     </View>
   );
 }

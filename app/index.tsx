@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -34,83 +35,91 @@ export default function LoginScreen() {
     setBusy(false);
 
     if (!res.ok) return setError(res.error);
+
+    // ✅ pending invite flow
+    const pendingToken = await AsyncStorage.getItem("pending_invite_token");
+    if (pendingToken) {
+      await AsyncStorage.removeItem("pending_invite_token");
+      router.replace(`/invite/${pendingToken}`);
+      return;
+    }
+
     router.replace("/home");
   }
 
-return (
-  <ImageBackground
-    source={require("../assets/images/background.png")}
-    style={styles.bg}
-    resizeMode="cover"
-  >
-    {/* 🔒 lukustab ekraani kõrguse */}
-    <View style={styles.screenLock}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.flex}
-      >
-        <View style={styles.content}>
-          <View style={styles.container}>
-            <Image
-              source={require("../assets/images/logo.png")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+  return (
+    <ImageBackground
+      source={require("../assets/images/background.png")}
+      style={styles.bg}
+      resizeMode="cover"
+    >
+      <View style={styles.screenLock}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.flex}
+        >
+          <View style={styles.content}>
+            <View style={styles.container}>
+              <Image
+                source={require("../assets/images/logo.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
 
-            <TextInput
-              placeholder="e-mail"
-              placeholderTextColor="#6B6B6B"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-              style={styles.input}
-            />
+              <TextInput
+                placeholder="e-mail"
+                placeholderTextColor="#6B6B6B"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
+                style={styles.input}
+              />
 
-            <TextInput
-              placeholder="password"
-              placeholderTextColor="#6B6B6B"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              style={styles.input}
-            />
+              <TextInput
+                placeholder="password"
+                placeholderTextColor="#6B6B6B"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                style={styles.input}
+              />
 
-            {!!error && <Text style={styles.errorText}>{error}</Text>}
+              {!!error && <Text style={styles.errorText}>{error}</Text>}
 
-            <Pressable
-              onPress={onLogin}
-              style={({ pressed }) => [
-                styles.btn,
-                pressed && styles.btnPressed,
-              ]}
-              disabled={busy}
-            >
-              {busy ? (
-                <ActivityIndicator />
-              ) : (
-                <Text style={styles.btnText}>Log in</Text>
-              )}
-            </Pressable>
+              <Pressable
+                onPress={onLogin}
+                style={({ pressed }) => [
+                  styles.btn,
+                  pressed && styles.btnPressed,
+                ]}
+                disabled={busy}
+              >
+                {busy ? (
+                  <ActivityIndicator />
+                ) : (
+                  <Text style={styles.btnText}>Log in</Text>
+                )}
+              </Pressable>
 
-            <Pressable
-              onPress={() => setShowRegister(true)}
-              style={({ pressed }) => [
-                styles.btn,
-                pressed && styles.btnPressed,
-              ]}
-            >
-              <Text style={styles.btnText}>Register</Text>
-            </Pressable>
+              <Pressable
+                onPress={() => setShowRegister(true)}
+                style={({ pressed }) => [
+                  styles.btn,
+                  pressed && styles.btnPressed,
+                ]}
+              >
+                <Text style={styles.btnText}>Register</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
 
-      <RegisterModal
-        visible={showRegister}
-        onClose={() => setShowRegister(false)}
-      />
-    </View>
-  </ImageBackground>
-);
+        <RegisterModal
+          visible={showRegister}
+          onClose={() => setShowRegister(false)}
+        />
+      </View>
+    </ImageBackground>
+  );
 }

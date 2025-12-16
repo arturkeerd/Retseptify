@@ -1,18 +1,20 @@
-import { registerWithEmail } from "@/hooks/useAuth";
-import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
-  Text,
   View,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { registerWithEmail } from "@/hooks/useAuth";
 import WhiteTextButton from "./WhiteTextButton";
 import WhiteTextField from "./WhiteTextField";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 const schema = z
   .object({
@@ -35,6 +37,8 @@ type Props = {
 };
 
 export default function RegisterModal({ visible, onClose, onRegistered }: Props) {
+  const router = useRouter();
+
   const {
     setValue,
     handleSubmit,
@@ -55,14 +59,12 @@ export default function RegisterModal({ visible, onClose, onRegistered }: Props)
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Kui modal avatakse/suletakse: puhasta vead ja väljad
   useEffect(() => {
     if (!visible) {
       setErr(null);
       setSubmitting(false);
       reset();
     } else {
-      // kui tahad, et avamisel kohe “isValid” oleks korrektne
       trigger();
     }
   }, [visible, reset, trigger]);
@@ -80,6 +82,15 @@ export default function RegisterModal({ visible, onClose, onRegistered }: Props)
     setSubmitting(false);
     if (!res.ok) return setErr(res.error);
 
+    // ✅ pending invite flow
+    const pendingToken = await AsyncStorage.getItem("pending_invite_token");
+    if (pendingToken) {
+      await AsyncStorage.removeItem("pending_invite_token");
+      onClose();
+      router.replace(`/invite/${pendingToken}`);
+      return;
+    }
+
     onRegistered?.();
     onClose();
   });
@@ -89,6 +100,7 @@ export default function RegisterModal({ visible, onClose, onRegistered }: Props)
       <View style={s.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.select({ ios: "padding", android: "height" })}
+          style={s.kav}
         >
           <View style={s.modal}>
             <Text style={s.title}>Registreerimine</Text>
@@ -105,7 +117,9 @@ export default function RegisterModal({ visible, onClose, onRegistered }: Props)
               placeholder="E-mail"
               keyboardType="email-address"
               autoCapitalize="none"
-              onChangeText={(t) => setValue("email", t, { shouldValidate: true })}
+              onChangeText={(t) =>
+                setValue("email", t, { shouldValidate: true })
+              }
               errorText={errors.email?.message}
             />
 
@@ -156,9 +170,19 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
-  modal: { backgroundColor: "#fff", borderRadius: 16, padding: 20 },
+  kav: {
+    width: "100%",
+    maxWidth: 420,
+  },
+  modal: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+  },
   title: {
     fontSize: 22,
     fontWeight: "700",

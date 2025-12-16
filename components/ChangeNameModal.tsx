@@ -1,13 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import React, { useState } from "react";
 import {
-    Alert,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity
+  Alert,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity
 } from "react-native";
 
 type Props = {
@@ -61,7 +61,6 @@ export default function ChangeNameModal({
         <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.title}>Muuda nimi</Text>
 
-          <Text style={styles.label}>Uus nimi</Text>
           <TextInput
             value={newName}
             onChangeText={setNewName}
@@ -82,54 +81,58 @@ export default function ChangeNameModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     justifyContent: "center",
     alignItems: "center",
   },
   modal: {
-    width: 300,
-    backgroundColor: "#E8E6E1",
-    borderRadius: 20,
-    padding: 25,
+    width: 357,
+    backgroundColor: "#e7e7e7ff",
+    borderRadius: 24,
+    padding: 50,
     alignItems: "center",
   },
   title: {
-    fontSize: 24,
-    fontWeight: "400",
-    marginBottom: 20,
+    fontSize: 45,
+    fontWeight: "600",
+    marginBottom: 40,
     textAlign: "center",
-  },
-  label: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-    alignSelf: "flex-start",
+    color: "#393939",
+    textDecorationLine: "underline",
   },
   input: {
-    width: "100%",
-    height: 45,
+    width: "70%",
+    height: 60,
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
-    paddingHorizontal: 15,
-    fontSize: 16,
+    paddingHorizontal: 24,
+    fontSize: 20,
     marginBottom: 20,
-  },
-  saveButton: {
-    width: "100%",
-    height: 45,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 22.5,
-    justifyContent: "center",
-    alignItems: "center",
+    color: "#1d1b1bff",
+    textAlign: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     elevation: 2,
   },
+  saveButton: {
+    width: "70%",
+    height: 60,
+    backgroundColor: "#C8E6C9",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   saveButtonText: {
-    fontSize: 18,
-    fontWeight: "400",
-    color: "#333",
+    fontSize: 40,
+    fontWeight: "500",
+    color: "#5D4037",
   },
 });
