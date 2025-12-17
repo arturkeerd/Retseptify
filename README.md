@@ -16,6 +16,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install react-native-dotenv
    npm install react-native-url-polyfill
    npm install @supabase/supabase-js
+   npx expo install expo-image-picker
    npm install
    ```
 
