@@ -3,7 +3,6 @@ import { StyleSheet } from "react-native";
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#FFE9A6",
     borderWidth: 10,
   },
 

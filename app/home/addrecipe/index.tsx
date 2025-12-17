@@ -558,7 +558,15 @@ export default function AddRecipe() {
   }
 
   return (
-    <View style={[styles.root, { borderColor: primaryKitchen?.color ?? "#FFE9A6" }]}>
+    <View
+  style={[
+    styles.root,
+    {
+      backgroundColor: primaryKitchen?.color ?? "#FFE9A6",
+      borderColor: primaryKitchen?.color ?? "#FFE9A6",
+    },
+  ]}
+>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* IMAGE */}
         <TouchableOpacity style={styles.imageCard} activeOpacity={0.9} onPress={pickImage}>
