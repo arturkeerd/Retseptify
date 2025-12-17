@@ -1,6 +1,6 @@
 // app/home/detailview/index.tsx
 import { supabase } from "@/lib/supabase";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -28,6 +28,9 @@ import ProfileButton from "@/components/ProfileButton";
 import TagsModal from "@/components/TagsModal";
 
 import styles from "./styles";
+
+const router = useRouter();
+
 
 type DbRecipe = {
   id: string;
@@ -678,7 +681,18 @@ export default function DetailView() {
 
       {/* Alumine rida: Edit / Chat + Home + Profiil */}
       <View style={styles.bottomBar}>
-        {isChef ? <EditButton recipeId={recipe.id} /> : <NotificationButton />}
+           {isChef ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() =>
+                  router.push({ pathname: "/home/addrecipe", params: { id: recipe.id } })
+                }
+              >
+                <EditButton recipeId={recipe.id} />
+              </TouchableOpacity>
+            ) : (
+              <NotificationButton />
+            )}
         <HomeButton />
         <ProfileButton />
       </View>

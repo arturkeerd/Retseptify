@@ -5,6 +5,7 @@ import ProfileButton from "@/components/ProfileButton";
 import RecipeListItem from "@/components/RecipeListItem";
 import { SortMode, SortRecipes } from "@/components/SortRecipes";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
@@ -17,6 +18,9 @@ import {
   View,
 } from "react-native";
 import styles from "./styles";
+
+const router = useRouter();
+
 
 type DbRecipe = {
   id: string;
@@ -408,7 +412,7 @@ export default function Home() {
               <TouchableOpacity
                 style={styles.addRecipeButton}
                 activeOpacity={0.9}
-                onPress={() => console.log("Add recipe pressed")}
+                onPress={() => router.push("/home/addrecipe")}
               >
                 <Image source={AddIcon} style={styles.addIconImage} />
               </TouchableOpacity>

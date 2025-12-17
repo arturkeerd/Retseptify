@@ -2,6 +2,9 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity } from "react-native";
 
+const router = useRouter();
+
+
 type Props = {
   recipeId: string;
 };
