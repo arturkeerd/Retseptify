@@ -6,8 +6,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     Image,
+    Platform,
     Pressable,
     ScrollView,
     Text,
@@ -20,6 +20,7 @@ import AddIcon from "@/assets/images/add.png";
 import DeleteIcon from "@/assets/images/delete.png";
 import PhotoIcon from "@/assets/images/photo.png";
 
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import DescriptionCard from "@/components/DescriptionCard";
 import HomeButton from "@/components/HomeButton";
 import IngredientsTable, { IngredientRow } from "@/components/IngredientsTable";
@@ -27,8 +28,8 @@ import KitchenPickerModal from "@/components/KitchenPickerModal";
 import type { Kitchen } from "@/components/KitchensModal";
 import ProfileButton from "@/components/ProfileButton";
 
-// ⚠️ Su import oli TwoStepUnitPickerForRecipe, aga fail on UnitPickerForRecipe.
-// Jätan selle täpselt nagu sul praegu, et compile ei plahvataks.
+// NB: sul võib olla 2-step picker eraldi failis.
+// Kui sul on see olemas, vaheta siinsamas import tagasi TwoStepUnitPickerForRecipe peale.
 import UnitPickerForRecipe from "@/components/UnitPickerForRecipe";
 
 import { convertQuantitySameCategory } from "@/lib/unitConversion";
@@ -48,6 +49,7 @@ export default function AddRecipe() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string; recipeId?: string }>();
 
+  // support both param names
   const id = params.id ?? params.recipeId;
   const isEdit = !!id;
 
@@ -55,10 +57,7 @@ export default function AddRecipe() {
   const [saving, setSaving] = useState(false);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-  // ✅ NEW: pealkiri
   const [title, setTitle] = useState("");
-
   const [servings, setServings] = useState("1");
 
   const [rows, setRows] = useState<IngredientRow[]>([
@@ -73,7 +72,7 @@ export default function AddRecipe() {
   const selectedKitchenId = selectedKitchenIds[0] ?? null;
   const primaryKitchen = kitchens.find((k) => k.id === selectedKitchenId) ?? null;
 
-  // categories (märksõnad)
+  // categories
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categoriesModalVisible, setCategoriesModalVisible] = useState(false);
@@ -83,6 +82,7 @@ export default function AddRecipe() {
   // modals
   const [unitPickerRowKey, setUnitPickerRowKey] = useState<string | null>(null);
   const [kitchenPickerVisible, setKitchenPickerVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   // debounce timers
   const draftTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,7 +116,9 @@ export default function AddRecipe() {
       let q = supabase.from("kitchens").select("id, name, color");
 
       if (memberKitchenIds.length > 0) {
-        q = q.or(`owner_user_id.eq.${userId},id.in.(${memberKitchenIds.join(",")})`);
+        q = q.or(
+          `owner_user_id.eq.${userId},id.in.(${memberKitchenIds.join(",")})`
+        );
       } else {
         q = q.eq("owner_user_id", userId);
       }
@@ -132,6 +134,7 @@ export default function AddRecipe() {
       const list = (data as Kitchen[]) ?? [];
       setKitchens(list);
 
+      // auto pick if only one
       setSelectedKitchenIds((prev) => {
         if (prev.length > 0) return prev;
         if (list.length === 1) return [list[0].id];
@@ -202,6 +205,7 @@ export default function AddRecipe() {
         image_url,
         description,
         kitchen_id,
+        author_user_id,
         recipe_ingredients ( ingredient, quantity, unit ),
         recipe_categories ( category_id )
       `
@@ -350,52 +354,57 @@ export default function AddRecipe() {
     }
   };
 
-  // ✅ DELETE (only in edit mode)
-  const deleteRecipe = useCallback(() => {
+  // ---------- DELETE ----------
+  const runDelete = useCallback(async () => {
     if (!id) return;
 
-    Alert.alert(
-      "Kustuta retsept?",
-      "See kustutab retsepti ja kõik seotud andmed.",
-      [
-        { text: "Tühista", style: "cancel" },
-        {
-          text: "Kustuta",
-          style: "destructive",
-          onPress: async () => {
-            setSaving(true);
-            setError(null);
+    setSaving(true);
+    setError(null);
 
-            try {
-              await supabase.from("recipe_ingredients").delete().eq("recipe_id", id);
-              await supabase.from("recipe_categories").delete().eq("recipe_id", id);
-              await supabase.from("recipe_kitchens").delete().eq("recipe_id", id);
+    try {
+      const delIng = await supabase.from("recipe_ingredients").delete().eq("recipe_id", id);
+      if (delIng.error) console.log("DEL recipe_ingredients error:", delIng.error);
 
-              // notifications table has recipe_id in your schema screenshot
-              await supabase.from("notifications").delete().eq("recipe_id", id);
+      const delCats = await supabase.from("recipe_categories").delete().eq("recipe_id", id);
+      if (delCats.error) console.log("DEL recipe_categories error:", delCats.error);
 
-              const { error } = await supabase.from("recipes").delete().eq("id", id);
-              if (error) {
-                console.log("delete recipe error", error.message);
-                setError("Kustutamine ebaõnnestus");
-                setSaving(false);
-                return;
-              }
+      // If you don't have these tables, keep them - it will just log the error.
+      const delRK = await supabase.from("recipe_kitchens").delete().eq("recipe_id", id);
+      if (delRK.error) console.log("DEL recipe_kitchens error:", delRK.error);
 
-              await AsyncStorage.removeItem(draftKeyEdit(id));
-              await AsyncStorage.removeItem(DRAFT_KEY_NEW);
+      const delNotif = await supabase.from("notifications").delete().eq("recipe_id", id);
+      if (delNotif.error) console.log("DEL notifications error:", delNotif.error);
 
-              setSaving(false);
-              router.replace("/home");
-            } catch (e: any) {
-              console.log("delete recipe exception", e?.message ?? e);
-              setError("Kustutamine ebaõnnestus");
-              setSaving(false);
-            }
-          },
-        },
-      ]
-    );
+      const delRecipe = await supabase.from("recipes").delete().eq("id", id).select("id");
+      if (delRecipe.error) {
+        console.log("DEL recipes error:", delRecipe.error);
+        setError(delRecipe.error.message);
+        if (Platform.OS === "web") window.alert(delRecipe.error.message);
+        setSaving(false);
+        return;
+      }
+
+      if (!delRecipe.data || delRecipe.data.length === 0) {
+        const msg =
+          "Retsepti ei kustutatud (0 rida). Tõenäoliselt RLS/poliitika blokib delete’i.";
+        console.log(msg);
+        setError(msg);
+        if (Platform.OS === "web") window.alert(msg);
+        setSaving(false);
+        return;
+      }
+
+      await AsyncStorage.removeItem(draftKeyEdit(id));
+      await AsyncStorage.removeItem(DRAFT_KEY_NEW);
+
+      setSaving(false);
+      router.replace("/home");
+    } catch (e: any) {
+      console.log("DELETE exception:", e?.message ?? e);
+      setError("Kustutamine ebaõnnestus");
+      if (Platform.OS === "web") window.alert(String(e?.message ?? e));
+      setSaving(false);
+    }
   }, [id, router]);
 
   // ---------- DRAFT SAVE ----------
@@ -459,10 +468,26 @@ export default function AddRecipe() {
 
       let recipeId = id ?? null;
 
+      // create
       if (!isEdit) {
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth.user?.id;
+
+        if (!userId) {
+          console.log("insert recipe error: no auth user");
+          setError("Pole sisse logitud (userId puudub)");
+          setSaving(false);
+          return;
+        }
+
+        const insertPayload = {
+          ...payload,
+          author_user_id: userId, // ✅ FIX: required NOT NULL column
+        };
+
         const { data, error } = await supabase
           .from("recipes")
-          .insert(payload)
+          .insert(insertPayload)
           .select("id")
           .single();
 
@@ -479,6 +504,7 @@ export default function AddRecipe() {
           await AsyncStorage.removeItem(DRAFT_KEY_NEW);
         }
       } else {
+        // update
         const { error } = await supabase.from("recipes").update(payload).eq("id", id);
         if (error) {
           console.log("update recipe error", error.message);
@@ -492,6 +518,7 @@ export default function AddRecipe() {
         return;
       }
 
+      // ingredients: delete + insert
       await supabase.from("recipe_ingredients").delete().eq("recipe_id", recipeId);
 
       const ingredientPayload = rows
@@ -508,6 +535,7 @@ export default function AddRecipe() {
         if (error) console.log("insert ingredients error", error.message);
       }
 
+      // categories: delete + insert
       await supabase.from("recipe_categories").delete().eq("recipe_id", recipeId);
 
       if (selectedCategoryIds.length > 0) {
@@ -559,14 +587,14 @@ export default function AddRecipe() {
 
   return (
     <View
-  style={[
-    styles.root,
-    {
-      backgroundColor: primaryKitchen?.color ?? "#FFE9A6",
-      borderColor: primaryKitchen?.color ?? "#FFE9A6",
-    },
-  ]}
->
+      style={[
+        styles.root,
+        {
+          backgroundColor: primaryKitchen?.color ?? "#FFE9A6",
+          borderColor: primaryKitchen?.color ?? "#FFE9A6",
+        },
+      ]}
+    >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* IMAGE */}
         <TouchableOpacity style={styles.imageCard} activeOpacity={0.9} onPress={pickImage}>
@@ -583,7 +611,7 @@ export default function AddRecipe() {
           <Text style={styles.imageHint}>(Siia saab importida pilte, ei ole kaamera funktsioon)</Text>
         </TouchableOpacity>
 
-        {/* ✅ TITLE */}
+        {/* TITLE */}
         <View style={styles.titleRow}>
           <Text style={styles.titleLabel}>Pealkiri:</Text>
           <TextInput
@@ -614,7 +642,7 @@ export default function AddRecipe() {
             <TouchableOpacity
               style={styles.deleteBtn}
               activeOpacity={0.85}
-              onPress={deleteRecipe}
+              onPress={() => setDeleteModalVisible(true)}
             >
               <Image source={DeleteIcon} style={styles.deleteIcon} resizeMode="contain" />
             </TouchableOpacity>
@@ -641,7 +669,9 @@ export default function AddRecipe() {
             onPress={() => setCategoriesModalVisible(true)}
           >
             <Text style={styles.pillText}>
-              {selectedCategoryIds.length > 0 ? `Märksõnad (${selectedCategoryIds.length})` : "Märksõnad"}
+              {selectedCategoryIds.length > 0
+                ? `Märksõnad (${selectedCategoryIds.length})`
+                : "Märksõnad"}
             </Text>
           </TouchableOpacity>
 
@@ -685,6 +715,18 @@ export default function AddRecipe() {
         selectedKitchenId={selectedKitchenId}
         onSelect={handleSelectKitchen}
         onClose={() => setKitchenPickerVisible(false)}
+      />
+
+      {/* DELETE CONFIRM MODAL */}
+      <ConfirmDeleteModal
+        visible={deleteModalVisible}
+        title={"Oled kindel, et soovid kustutada?"}
+        message={"Retsept ja kõik sellega seotud andmed eemaldatakse jäädavalt."}
+        onCancel={() => setDeleteModalVisible(false)}
+        onConfirm={async () => {
+          setDeleteModalVisible(false);
+          await runDelete();
+        }}
       />
 
       {/* SAVING INDICATOR */}
@@ -760,6 +802,7 @@ function CategoriesPickerModal(props: {
         backgroundColor: "rgba(0,0,0,0.35)",
         justifyContent: "center",
         padding: 18,
+        zIndex: 998,
       }}
     >
       <Pressable style={{ flex: 1 }} onPress={onClose} />
